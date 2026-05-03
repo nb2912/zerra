@@ -28,6 +28,9 @@ function startServer(port = 3000) {
   }
 
   const customEnvKeys = new Set();
+  const recentRequests = [];
+  const MAX_LOGS = 20;
+
   // 8. Enhanced DX: Auto-load .env files
   if (config.features.dotenv) {
     const envPath = path.join(process.cwd(), '.env');
@@ -85,12 +88,28 @@ function startServer(port = 3000) {
     // 1. Enhanced DX: Beautiful Request Logging
     const originalEnd = res.end;
     res.end = function (...args) {
+      const duration = Date.now() - startTime;
+      const path = req.path || url;
+
+      // Log to terminal
       if (config.features.logging) {
-        const duration = Date.now() - startTime;
         const statusColor = res.statusCode >= 500 ? '\x1b[31m' : res.statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
         const resetColor = '\x1b[0m';
-        console.log(`${statusColor}[${method}]${resetColor} ${req.path || url} ➜ ${statusColor}${res.statusCode}${resetColor} (${duration}ms)`);
+        console.log(`${statusColor}[${method}]${resetColor} ${path} ➜ ${statusColor}${res.statusCode}${resetColor} (${duration}ms)`);
       }
+
+      // Store for dashboard (exclude the dashboard itself)
+      if (path !== '/__zerra' && path !== '/favicon.ico') {
+        recentRequests.unshift({
+          method,
+          path,
+          statusCode: res.statusCode,
+          duration,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        if (recentRequests.length > MAX_LOGS) recentRequests.pop();
+      }
+
       return originalEnd.apply(this, args);
     };
 
@@ -234,6 +253,37 @@ function startServer(port = 3000) {
             <section>
               <h2>📂 Active Routes</h2>
               <ul>${routeList || '<li>No routes found in /api</li>'}</ul>
+            </section>
+
+            <section>
+              <h2>📊 Recent Activity (Live Logs)</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="text-align: left; border-bottom: 2px solid #eee;">
+                    <th style="padding: 10px 5px;">Method</th>
+                    <th style="padding: 10px 5px;">Path</th>
+                    <th style="padding: 10px 5px;">Status</th>
+                    <th style="padding: 10px 5px;">Time</th>
+                    <th style="padding: 10px 5px;">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${recentRequests.map(req => {
+                    const statusColor = req.statusCode >= 500 ? '#ff4d4f' : req.statusCode >= 400 ? '#faad14' : '#52c41a';
+                    return `
+                      <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px 5px;"><strong>${req.method}</strong></td>
+                        <td style="padding: 8px 5px; font-family: monospace; color: #666;">${req.path}</td>
+                        <td style="padding: 8px 5px;"><span class="badge" style="background: ${statusColor}">${req.statusCode}</span></td>
+                        <td style="padding: 8px 5px; font-size: 0.85rem; color: #999;">${req.timestamp}</td>
+                        <td style="padding: 8px 5px; font-size: 0.85rem; color: #999;">${req.duration}ms</td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #999;">No requests yet. Try hitting an endpoint!</td></tr>'}
+                </tbody>
+              </table>
+              <p style="text-align: right; margin-top: 10px;"><small><em>Dashboard refreshes automatically every 5s</em></small></p>
+              <script>setTimeout(() => location.reload(), 5000);</script>
             </section>
 
             <section>
