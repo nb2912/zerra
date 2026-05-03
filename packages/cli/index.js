@@ -37,6 +37,19 @@ program
         name: "initGit",
         message: "Would you like to initialize a new git repository?",
         default: true,
+      },
+      {
+        type: "checkbox",
+        name: "features",
+        message: "Which advanced Zerra features would you like to enable?",
+        choices: [
+          { name: "Beautiful Request Logging", value: "logging", checked: true },
+          { name: "Dynamic Routing ([id].js)", value: "dynamicRouting", checked: true },
+          { name: "File-Based Middleware (_middleware.js)", value: "middleware", checked: true },
+          { name: "Auto-load Environment Variables (.env)", value: "dotenv", checked: true },
+          { name: "Automatic Input Validation (Schema)", value: "validation", checked: true },
+          { name: "Multipart File Uploads (req.files)", value: "multipart", checked: true }
+        ]
       }
     ]);
 
@@ -81,6 +94,19 @@ program
         pkg.name = projectName;
         await fs.writeJson(pkgPath, pkg, { spaces: 2 });
       }
+
+      // 4. Generate zerra.config.json based on feature selection
+      const featureConfig = {
+        logging: answers.features.includes('logging'),
+        dynamicRouting: answers.features.includes('dynamicRouting'),
+        middleware: answers.features.includes('middleware'),
+        dotenv: answers.features.includes('dotenv'),
+        validation: answers.features.includes('validation'),
+        multipart: answers.features.includes('multipart')
+      };
+      
+      const configJsonPath = path.join(targetPath, 'zerra.config.json');
+      await fs.writeJson(configJsonPath, { features: featureConfig }, { spaces: 2 });
 
       const { execSync } = require("child_process");
       

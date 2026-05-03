@@ -3,21 +3,43 @@ const fs = require("fs");
 const path = require("path");
 
 function startServer(port = 3000) {
+  const configPath = path.join(process.cwd(), 'zerra.config.json');
+  let config = {
+    features: {
+      logging: true,
+      dynamicRouting: true,
+      middleware: true,
+      dotenv: true,
+      validation: true,
+      multipart: true
+    }
+  };
+  if (fs.existsSync(configPath)) {
+    try {
+      const userConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      config.features = { ...config.features, ...(userConfig.features || {}) };
+    } catch (e) {
+      console.warn("⚠️ Invalid zerra.config.json. Using defaults.");
+    }
+  }
+
   // 8. Enhanced DX: Auto-load .env files
-  const envPath = path.join(process.cwd(), '.env');
-  if (fs.existsSync(envPath)) {
-    const envFile = fs.readFileSync(envPath, 'utf8');
-    envFile.split('\n').forEach(line => {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-      if (match) {
-        const key = match[1];
-        let value = match[2] || '';
-        // Remove quotes
-        if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-        else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-        if (!process.env.hasOwnProperty(key)) process.env[key] = value;
-      }
-    });
+  if (config.features.dotenv) {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envFile = fs.readFileSync(envPath, 'utf8');
+      envFile.split('\n').forEach(line => {
+        const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+        if (match) {
+          const key = match[1];
+          let value = match[2] || '';
+          // Remove quotes
+          if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+          else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+          if (!process.env.hasOwnProperty(key)) process.env[key] = value;
+        }
+      });
+    }
   }
 
   const apiDir = path.join(process.cwd(), "api");
@@ -29,10 +51,12 @@ function startServer(port = 3000) {
     // 1. Enhanced DX: Beautiful Request Logging
     const originalEnd = res.end;
     res.end = function (...args) {
-      const duration = Date.now() - startTime;
-      const statusColor = res.statusCode >= 500 ? '\x1b[31m' : res.statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
-      const resetColor = '\x1b[0m';
-      console.log(`${statusColor}[${method}]${resetColor} ${req.path || url} ➜ ${statusColor}${res.statusCode}${resetColor} (${duration}ms)`);
+      if (config.features.logging) {
+        const duration = Date.now() - startTime;
+        const statusColor = res.statusCode >= 500 ? '\x1b[31m' : res.statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
+        const resetColor = '\x1b[0m';
+        console.log(`${statusColor}[${method}]${resetColor} ${req.path || url} ➜ ${statusColor}${res.statusCode}${resetColor} (${duration}ms)`);
+      }
       return originalEnd.apply(this, args);
     };
 
@@ -66,7 +90,7 @@ function startServer(port = 3000) {
         if (['GET', 'HEAD', 'OPTIONS'].includes(method)) return resolve({ body: null, files: [] });
         const contentType = req.headers['content-type'] || '';
         
-        if (contentType.includes('multipart/form-data')) {
+        if (config.features.multipart && contentType.includes('multipart/form-data')) {
           const busboy = require('busboy');
           const bb = busboy({ headers: req.headers });
           const body = {};
@@ -126,7 +150,7 @@ function startServer(port = 3000) {
     let filePath = path.join(apiDir, `${cleanPath}.js`);
 
     // 6. Enhanced DX: Dynamic Routing ([id].js)
-    if (!fs.existsSync(filePath)) {
+    if (config.features.dynamicRouting && !fs.existsSync(filePath)) {
       const parts = cleanPath.split('/').filter(Boolean);
       let currentDir = apiDir;
       let matchedFile = null;
@@ -176,13 +200,15 @@ function startServer(port = 3000) {
         let currentPath = targetDir;
         const middlewarePaths = [];
         
-        while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
-          const mwPath = path.join(currentPath, '_middleware.js');
-          if (fs.existsSync(mwPath)) {
-            middlewarePaths.unshift(mwPath); // Run top-down
+        if (config.features.middleware) {
+          while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
+            const mwPath = path.join(currentPath, '_middleware.js');
+            if (fs.existsSync(mwPath)) {
+              middlewarePaths.unshift(mwPath); // Run top-down
+            }
+            if (currentPath === apiDir) break;
+            currentPath = path.dirname(currentPath);
           }
-          if (currentPath === apiDir) break;
-          currentPath = path.dirname(currentPath);
         }
 
         let middlewareIndex = 0;
@@ -216,7 +242,7 @@ function startServer(port = 3000) {
               
               // 9. Enhanced DX: Input Validation
               const schema = handler.schema;
-              if (schema && typeof req.body === 'object' && req.body !== null) {
+              if (config.features.validation && schema && typeof req.body === 'object' && req.body !== null) {
                 const errors = [];
                 for (const [key, type] of Object.entries(schema)) {
                    if (typeof req.body[key] !== type) {
