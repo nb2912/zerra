@@ -218,7 +218,16 @@ function startServer(port = 3000) {
             results = results.concat(getRoutes(filePath, path.join(base, file)));
           } else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) {
             const route = path.join(base, file).replace(/\\/g, '/').replace(/\.(js|ts)$/, '');
-            results.push(route === 'index' ? '/' : `/${route}`);
+            const fullPath = `/${route === 'index' ? '' : route}`;
+            
+            // Try to extract schema for playground presets
+            let schema = null;
+            try {
+              const mod = jiti(filePath);
+              schema = mod.schema || (mod.default && mod.default.schema);
+            } catch (e) {}
+
+            results.push({ path: fullPath, schema });
           }
         });
         return results;
@@ -227,7 +236,7 @@ function startServer(port = 3000) {
       const routes = getRoutes(apiDir);
       const featureList = Object.entries(config.features)
         .map(([k, v]) => `<li><strong>${k}</strong>: ${v ? '✅' : '❌'}</li>`).join('');
-      const routeList = routes.map(r => `<li><a href="${r}">${r}</a></li>`).join('');
+      const routeList = routes.map(r => `<li><a href="${r.path}">${r.path}</a></li>`).join('');
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(`
@@ -289,10 +298,10 @@ function startServer(port = 3000) {
               }
               .badge { font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 20px; font-weight: normal; }
               
-              main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+              main { max-width: 1300px; margin: 40px auto; padding: 0 20px; }
               
-              .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-              @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+              .grid { display: grid; grid-template-columns: 2.5fr 1fr; gap: 25px; margin-bottom: 20px; }
+              @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
               
               section { 
                 background: var(--card-bg); 
@@ -322,31 +331,63 @@ function startServer(port = 3000) {
               }
               
               .env-item { background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #444; }
-              footer { text-align: center; margin-top: 40px; padding-bottom: 40px; color: var(--text-light); font-size: 0.85rem; }
+              
+              /* Fix for long error messages/stacks */
+              pre { 
+                white-space: pre-wrap !important; 
+                word-break: break-all !important; 
+                max-height: 300px !important; 
+                overflow-y: auto !important; 
+                margin: 0 !important; 
+              }
             </style>
           </head>
           <body>
             <main style="margin-top: 20px;">
               <div class="grid">
                 <section>
-                  <h2>📂 Active Routes</h2>
-                  <ul>
-                    ${routes.length > 0 ? routes.map(r => `
-                      <li>
-                        <a href="${r}" class="route-link">${r}</a>
-                        <span style="font-size: 0.8rem; color: #999;">GET</span>
-                      </li>
-                    `).join('') : '<li style="color:#999">No routes found in /api</li>'}
-                  </ul>
+                  <h2>📂 Active Routes & Playground</h2>
+                  <div style="display: flex; flex-direction: column; gap: 15px;">
+                    ${routes.length > 0 ? routes.map(r => {
+                      const sampleBody = r.schema ? JSON.stringify(Object.fromEntries(
+                        Object.entries(r.schema).map(([k, t]) => [k, t === 'number' ? 0 : t === 'boolean' ? false : 'text'])
+                      )) : '{}';
+                      
+                      return `
+                      <div style="border: 1px solid var(--border); border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                          <a href="${r.path}" class="route-link" style="font-size: 1.1rem;">${r.path}</a>
+                          ${r.schema ? '<span class="badge" style="background:#eee; color:#666;">Has Schema</span>' : ''}
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                          <select id="method-${r.path}" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #fff; font-family: inherit;">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                          </select>
+                          <input type="text" id="body-${r.path}" value='${sampleBody}' placeholder='{"key": "value"}' style="flex-grow: 1; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; font-size: 0.8rem;">
+                          <button onclick="testRoute('${r.path}')" style="background: var(--primary); color: #fff; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">SEND</button>
+                        </div>
+
+                        <div id="res-${r.path}" style="display: none; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 10px; position: relative;">
+                          <div id="status-${r.path}" style="position: absolute; top: 8px; right: 8px; font-size: 0.7rem; font-weight: bold;"></div>
+                          <pre style="margin: 0;"></pre>
+                        </div>
+                      </div>
+                    `}).join('') : '<div style="color:#999">No routes found in /api</div>'}
+                  </div>
                 </section>
 
                 <section>
                   <h2>⚙️ Features</h2>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
                     ${Object.entries(config.features).map(([k, v]) => `
-                      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px;">
+                        <span style="color: ${v ? 'inherit' : '#999'}; font-weight: 500;">${k}</span>
                         <span>${v ? '✅' : '❌'}</span>
-                        <span style="color: ${v ? 'inherit' : '#999'}">${k}</span>
                       </div>
                     `).join('')}
                   </div>
@@ -401,10 +442,49 @@ function startServer(port = 3000) {
             </main>
 
             <script>
+              async function testRoute(path) {
+                const method = document.getElementById('method-' + path).value;
+                const bodyStr = document.getElementById('body-' + path).value;
+                const resDiv = document.getElementById('res-' + path);
+                const statusDiv = document.getElementById('status-' + path);
+                const pre = resDiv.querySelector('pre');
+                
+                resDiv.style.display = 'block';
+                pre.innerText = 'Sending request...';
+                statusDiv.innerText = '';
+                
+                try {
+                  const options = { method, headers: {} };
+                  if (['POST', 'PUT', 'PATCH'].includes(method) && bodyStr) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = bodyStr;
+                  }
+                  
+                  const start = Date.now();
+                  const response = await fetch(path, options);
+                  const duration = Date.now() - start;
+                  const data = await response.json().catch(() => null);
+                  
+                  statusDiv.innerText = response.status + ' (' + duration + 'ms)';
+                  statusDiv.style.color = response.status >= 400 ? '#ff4d4f' : '#52c41a';
+                  pre.innerText = JSON.stringify(data, null, 2) || 'No response body';
+                } catch (err) {
+                  statusDiv.innerText = 'ERROR';
+                  statusDiv.style.color = '#ff4d4f';
+                  pre.innerText = err.message;
+                }
+              }
+
               // Soft refresh every 5 seconds
-              setTimeout(() => {
+              let refreshTimeout = setTimeout(() => {
                 window.location.reload();
               }, 5000);
+
+              // Pause refresh if user is interacting with playground
+              document.addEventListener('mousedown', () => {
+                clearTimeout(refreshTimeout);
+                refreshTimeout = setTimeout(() => window.location.reload(), 15000);
+              });
             </script>
           </body>
         </html>
@@ -512,7 +592,14 @@ function startServer(port = 3000) {
               
               // 9. Enhanced DX: Input Validation
               const schema = handler.schema;
-              if (config.features.validation && schema && typeof req.body === 'object' && req.body !== null) {
+              if (config.features.validation && schema) {
+                if (!req.body || typeof req.body !== 'object') {
+                  return res.status(400).json({ 
+                    error: "Validation Failed", 
+                    details: ["Request body is required for this route."] 
+                  });
+                }
+
                 const errors = [];
                 for (const [key, type] of Object.entries(schema)) {
                    if (typeof req.body[key] !== type) {
