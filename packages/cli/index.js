@@ -27,6 +27,16 @@ program
         ],
       },
       {
+        type: "list",
+        name: "language",
+        message: "Choose your primary language:",
+        choices: [
+          { name: "JavaScript", value: "js" },
+          { name: "TypeScript", value: "ts" },
+        ],
+        default: "js",
+      },
+      {
         type: "confirm",
         name: "includeAuth",
         message: "Include Authentication Starter (JWT + Bcrypt)?",
@@ -66,6 +76,7 @@ program
     console.log(`   - Project Name: \x1b[36m${projectName}\x1b[0m`);
     console.log(`   - Database:     \x1b[33m${answers.database.replace('js-', '')}\x1b[0m`);
     console.log(`   - Auth Starter: \x1b[32m${answers.includeAuth ? 'Enabled' : 'Disabled'}\x1b[0m`);
+    console.log(`   - Language:     \x1b[36m${answers.language.toUpperCase()}\x1b[0m`);
     console.log(`   - Features:     \x1b[35m${answers.features.join(', ') || 'None'}\x1b[0m`);
     console.log(`   - Auto-Install: \x1b[32m${answers.installDeps ? 'Yes' : 'No'}\x1b[0m`);
     console.log(`   - Git Init:     \x1b[32m${answers.initGit ? 'Yes' : 'No'}\x1b[0m`);
@@ -143,7 +154,65 @@ program
       if (fs.existsSync(pkgPath)) {
         const pkg = await fs.readJson(pkgPath);
         pkg.name = projectName;
+
+        if (answers.language === 'ts') {
+          pkg.devDependencies = {
+            ...(pkg.devDependencies || {}),
+            "typescript": "^5.0.0",
+            "@types/node": "^20.0.0",
+            "tsx": "^4.0.0"
+          };
+          pkg.scripts = {
+            ...(pkg.scripts || {}),
+            "dev": "tsx watch server.js",
+            "build": "tsc",
+            "start": "node server.js"
+          };
+        }
         await fs.writeJson(pkgPath, pkg, { spaces: 2 });
+      }
+
+      // 3.5 Handle TypeScript File Renaming and tsconfig
+      if (answers.language === 'ts') {
+        console.log(`   TypeScript-ifying your project...`);
+        
+        // Generate tsconfig.json
+        const tsconfig = {
+          compilerOptions: {
+            target: "ESNext",
+            module: "CommonJS",
+            moduleResolution: "node",
+            esModuleInterop: true,
+            forceConsistentCasingInFileNames: true,
+            strict: true,
+            skipLibCheck: true,
+            outDir: "./dist"
+          },
+          include: ["api/**/*", "services/**/*", "server.js", "zerra.config.json"]
+        };
+        await fs.writeJson(path.join(targetPath, "tsconfig.json"), tsconfig, { spaces: 2 });
+
+        // Recursive function to rename .js to .ts
+        const renameJsToTs = async (dir) => {
+          const files = await fs.readdir(dir);
+          for (const file of files) {
+            const fullPath = path.join(dir, file);
+            const stat = await fs.stat(fullPath);
+            if (stat.isDirectory()) {
+              await renameJsToTs(fullPath);
+            } else if (file.endsWith(".js") && !file.startsWith("server.js")) {
+              const newPath = fullPath.replace(/\.js$/, ".ts");
+              await fs.move(fullPath, newPath);
+            }
+          }
+        };
+
+        if (fs.existsSync(path.join(targetPath, "api"))) {
+          await renameJsToTs(path.join(targetPath, "api"));
+        }
+        if (fs.existsSync(path.join(targetPath, "services"))) {
+          await renameJsToTs(path.join(targetPath, "services"));
+        }
       }
 
       // 4. Generate zerra.config.json based on feature selection
@@ -160,6 +229,19 @@ program
       
       const configJsonPath = path.join(targetPath, 'zerra.config.json');
       await fs.writeJson(configJsonPath, { features: featureConfig, plugins: [] }, { spaces: 2 });
+
+      // 4.5 Generate .gitignore for the new project
+      const gitignoreContent = `node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+${answers.language === 'ts' ? '*.tsbuildinfo' : ''}
+`;
+      await fs.writeFile(path.join(targetPath, '.gitignore'), gitignoreContent);
 
       const { execSync } = require("child_process");
       

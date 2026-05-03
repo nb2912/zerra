@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 function startServer(port = 3000) {
+  const jiti = require("jiti")(__filename);
   const configPath = path.join(process.cwd(), 'zerra.config.json');
   let config = {
     features: {
@@ -62,7 +63,7 @@ function startServer(port = 3000) {
   if (config.plugins && Array.isArray(config.plugins)) {
     config.plugins.forEach(pluginPath => {
       try {
-        const plugin = require(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
+        const plugin = jiti(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
         if (typeof plugin === 'function') plugin(zerra);
       } catch (e) {
         console.error(`❌ Failed to load plugin: ${pluginPath}`, e);
@@ -191,8 +192,8 @@ function startServer(port = 3000) {
           const stat = fs.statSync(filePath);
           if (stat && stat.isDirectory()) {
             results = results.concat(getRoutes(filePath, path.join(base, file)));
-          } else if (file.endsWith('.js') && !file.startsWith('_')) {
-            const route = path.join(base, file).replace(/\\/g, '/').replace('.js', '');
+          } else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) {
+            const route = path.join(base, file).replace(/\\/g, '/').replace(/\.(js|ts)$/, '');
             results.push(route === 'index' ? '/' : `/${route}`);
           }
         });
@@ -247,6 +248,9 @@ function startServer(port = 3000) {
     }
 
     let filePath = path.join(apiDir, `${cleanPath}.js`);
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(apiDir, `${cleanPath}.ts`);
+    }
 
     // 6. Enhanced DX: Dynamic Routing ([id].js)
     if (config.features.dynamicRouting && !fs.existsSync(filePath)) {
@@ -266,9 +270,9 @@ function startServer(port = 3000) {
           
           // Look for dynamic parameter [param]
           if (!match) {
-            match = files.find(f => isLast ? (f.startsWith('[') && f.endsWith('].js')) : (f.startsWith('[') && f.endsWith(']') && fs.statSync(path.join(currentDir, f)).isDirectory()));
+            match = files.find(f => isLast ? (f.startsWith('[') && (f.endsWith('].js') || f.endsWith('].ts'))) : (f.startsWith('[') && f.endsWith(']') && fs.statSync(path.join(currentDir, f)).isDirectory()));
             if (match) {
-              const paramName = isLast ? match.slice(1, -4) : match.slice(1, -1);
+              const paramName = isLast ? match.slice(1, match.lastIndexOf('].')) : match.slice(1, -1);
               req.params[paramName] = part;
             }
           }
@@ -301,7 +305,9 @@ function startServer(port = 3000) {
         
         if (config.features.middleware) {
           while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
-            const mwPath = path.join(currentPath, '_middleware.js');
+            let mwPath = path.join(currentPath, '_middleware.js');
+            if (!fs.existsSync(mwPath)) mwPath = path.join(currentPath, '_middleware.ts');
+            
             if (fs.existsSync(mwPath)) {
               middlewarePaths.unshift(mwPath); // Run top-down
             }
@@ -326,15 +332,16 @@ function startServer(port = 3000) {
           if (middlewareIndex < middlewarePaths.length) {
             const mwPath = middlewarePaths[middlewareIndex++];
             delete require.cache[require.resolve(mwPath)];
-            const mw = require(mwPath);
-            if (typeof mw === 'function') {
-               await mw(req, res, runNext);
+            const mw = jiti(mwPath);
+            if (typeof mw === 'function' || (mw && typeof mw.default === 'function')) {
+               const actualMw = mw.default || mw;
+               await actualMw(req, res, runNext);
             } else {
                await runNext();
             }
           } else {
             delete require.cache[require.resolve(filePath)];
-            const handler = require(filePath);
+            const handler = jiti(filePath);
 
             if (typeof handler === "function" || (handler && typeof handler.default === "function")) {
               const actualHandler = handler.default || handler;
@@ -379,9 +386,10 @@ function startServer(port = 3000) {
           if (fs.existsSync(errorHandlerPath)) {
             try {
               delete require.cache[require.resolve(errorHandlerPath)];
-              const errorHandler = require(errorHandlerPath);
-              if (typeof errorHandler === 'function') {
-                return await errorHandler(err, req, res);
+              const errorHandler = jiti(errorHandlerPath);
+              const actualErrorHandler = errorHandler.default || errorHandler;
+              if (typeof actualErrorHandler === 'function') {
+                return await actualErrorHandler(err, req, res);
               }
             } catch (e) {
               console.error("❌ Error in custom error handler:", e);

@@ -16,6 +16,7 @@ Zerra is designed to be the backend equivalent of Next.js—offering zero config
 - **Auto Validation**: Export a `schema` and let Zerra validate `req.body` automatically.
 - **Smart Parsing**: Built-in JSON body parsing, `req.query`, and multipart file uploads (`req.files`).
 - **CLI-First**: Scaffold your project with interactive database choices and optional DX feature flags.
+- **TypeScript Support**: Full, zero-config TypeScript support out of the box.
 
 ---
 
@@ -96,6 +97,19 @@ module.exports = async (req, res) => {
   const files = req.files; // Array of file buffers!
   res.json({ uploadedCount: files.length });
 };
+```
+
+### 6. TypeScript Support (New!)
+Scaffold your project with TypeScript for a fully typed experience. Zerra uses `jiti` internally for zero-config TS execution in dev mode.
+```typescript
+import { ZerraHandler } from 'zerra-core';
+
+export const handler: ZerraHandler = async (req, res) => {
+  const { id } = req.params;
+  res.json({ id, message: "Typed with Zerra!" });
+};
+
+export default handler;
 ```
 
 ### 6. Zero-Config Environment Variables
@@ -185,7 +199,7 @@ We love contributors! Zerra is a monorepo managed with npm workspaces.
 - [x] Middleware System
 - [x] Built-in Authentication Starter
 - [x] Dev Mode Dashboard
-- [ ] TypeScript Support
+- [x] TypeScript Support
 - [ ] Automatic API Documentation (Swagger)
 
 ---
