@@ -11,7 +11,8 @@ function startServer(port = 3000) {
       middleware: true,
       dotenv: true,
       validation: true,
-      multipart: true
+      multipart: true,
+      errors: true
     }
   };
   if (fs.existsSync(configPath)) {
@@ -264,6 +265,32 @@ function startServer(port = 3000) {
         await runNext();
 
       } catch (err) {
+        if (config.features.errors) {
+          // Check for custom _error.js handler
+          const errorHandlerPath = path.join(apiDir, '_error.js');
+          if (fs.existsSync(errorHandlerPath)) {
+            try {
+              delete require.cache[require.resolve(errorHandlerPath)];
+              const errorHandler = require(errorHandlerPath);
+              if (typeof errorHandler === 'function') {
+                return await errorHandler(err, req, res);
+              }
+            } catch (e) {
+              console.error("❌ Error in custom error handler:", e);
+            }
+          }
+
+          const statusCode = err.status || 500;
+          const message = err.message || "Internal Server Error";
+          
+          return res.status(statusCode).json({ 
+            error: statusCode >= 500 ? "Runtime Error" : "Request Error",
+            message: message,
+            stack: process.env.NODE_ENV === 'development' || !process.env.NODE_ENV ? err.stack : undefined 
+          });
+        }
+        
+        // Fallback if errors feature is disabled
         res.status(500).json({ error: "Runtime Error", message: err.message });
       }
     } else {

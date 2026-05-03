@@ -101,6 +101,21 @@ module.exports = async (req, res) => {
 ### 6. Zero-Config Environment Variables
 Just place a `.env` file at the root of your project. Zerra automatically parses it into `process.env` when the server starts.
 
+### 7. Smart Error Handling
+Zerra catches all errors and formats them into clean JSON. You can also create a custom handler at `api/_error.js`.
+```javascript
+// api/_error.js
+module.exports = async (err, req, res) => {
+  const status = err.status || 500;
+  res.status(status).json({
+    custom: true,
+    message: err.message
+  });
+};
+```
+You can also throw custom status codes from any route:
+`throw { status: 403, message: "Forbidden Access" };`
+
 ---
 
 ## 📁 Project Structure (Generated App)

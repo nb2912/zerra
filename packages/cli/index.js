@@ -48,7 +48,8 @@ program
           { name: "File-Based Middleware (_middleware.js)", value: "middleware", checked: true },
           { name: "Auto-load Environment Variables (.env)", value: "dotenv", checked: true },
           { name: "Automatic Input Validation (Schema)", value: "validation", checked: true },
-          { name: "Multipart File Uploads (req.files)", value: "multipart", checked: true }
+          { name: "Multipart File Uploads (req.files)", value: "multipart", checked: true },
+          { name: "Smart Error Handling (_error.js)", value: "errors", checked: true }
         ]
       }
     ]);
@@ -102,7 +103,8 @@ program
         middleware: answers.features.includes('middleware'),
         dotenv: answers.features.includes('dotenv'),
         validation: answers.features.includes('validation'),
-        multipart: answers.features.includes('multipart')
+        multipart: answers.features.includes('multipart'),
+        errors: answers.features.includes('errors')
       };
       
       const configJsonPath = path.join(targetPath, 'zerra.config.json');
