@@ -119,9 +119,6 @@ program
         }
       }
 
-        }
-      }
-
       // 2.5 Overlay Auth Starter (if selected)
       if (answers.includeAuth && fs.existsSync(authTemplatePath)) {
         console.log(`   🔐 Adding Auth Starter...`);
