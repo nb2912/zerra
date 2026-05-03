@@ -27,6 +27,7 @@ function startServer(port = 3000) {
     }
   }
 
+  const customEnvKeys = new Set();
   // 8. Enhanced DX: Auto-load .env files
   if (config.features.dotenv) {
     const envPath = path.join(process.cwd(), '.env');
@@ -40,7 +41,11 @@ function startServer(port = 3000) {
           // Remove quotes
           if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
           else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-          if (!process.env.hasOwnProperty(key)) process.env[key] = value;
+          
+          if (!process.env.hasOwnProperty(key)) {
+            process.env[key] = value;
+          }
+          customEnvKeys.add(key);
         }
       });
     }
@@ -205,7 +210,7 @@ function startServer(port = 3000) {
         .map(([k, v]) => `<li><strong>${k}</strong>: ${v ? '✅' : '❌'}</li>`).join('');
       const routeList = routes.map(r => `<li><a href="${r}">${r}</a></li>`).join('');
 
-      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(`
         <!DOCTYPE html>
         <html>
@@ -238,7 +243,20 @@ function startServer(port = 3000) {
 
             <section>
               <h2>🔐 Environment Variables</h2>
-              <ul>${Object.keys(process.env).filter(k => !k.startsWith('npm_') && !k.startsWith('NODE_')).map(k => `<li>${k}</li>`).join('') || '<li>No custom env vars loaded</li>'}</ul>
+              <ul>${
+                Object.keys(process.env)
+                  .filter(k => {
+                    // Show if it was in .env OR it's a common important one (PORT, NODE_ENV)
+                    // AND hide common system noise
+                    const isCustom = customEnvKeys.has(k);
+                    const isImportant = ['PORT', 'NODE_ENV', 'HOST'].includes(k);
+                    const isSystem = /^(ALLUSERSPROFILE|APPDATA|COMPUTERNAME|ComSpec|Common|DriverData|HOMEDRIVE|HOMEPATH|LOCALAPPDATA|LOGONSERVER|NUMBER_OF_PROCESSORS|OS|Path|PATHEXT|PROCESSOR|Program|PSModulePath|PUBLIC|System|TEMP|TMP|USER|windir|ZES_|VSCODE_|ANTIGRAVITY_)/i.test(k);
+                    
+                    return (isCustom || isImportant) && !isSystem;
+                  })
+                  .map(k => `<li><strong>${k}</strong>: <span class="badge" style="background:#eee; color:#666; font-family:monospace;">${process.env[k]}</span></li>`)
+                  .join('') || '<li>No custom env vars loaded from .env</li>'
+              }</ul>
             </section>
 
             <p><small>Zerra Engine is running in development mode.</small></p>
