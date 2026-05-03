@@ -2,7 +2,7 @@
 
 **The CLI-first backend generator and runtime engine.**
 
-Zerra is designed to be the backend equivalent of Next.js—offering zero configuration, instant setup, and file-based routing.
+Zerra is designed to be the backend equivalent of Next.js—offering zero configuration, instant setup, file-based routing, and a massive focus on Developer Experience (DX).
 
 [![npm version](https://img.shields.io/npm/v/create-zerra-app.svg)](https://www.npmjs.com/package/create-zerra-app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -11,8 +11,11 @@ Zerra is designed to be the backend equivalent of Next.js—offering zero config
 
 - **Zero Config**: Start building immediately without complex setups.
 - **File-based Routing**: Folders and files in `/api` automatically become your API endpoints.
-- **CLI-First**: Scaffolding your next backend project is just one command away.
-- **Native & Lightweight**: Built on native Node.js for maximum speed and minimal overhead.
+- **Dynamic Routing**: Use `[id].js` for dynamic path parameters.
+- **File-Based Middleware**: Drop `_middleware.js` in any folder to protect or intercept routes.
+- **Auto Validation**: Export a `schema` and let Zerra validate `req.body` automatically.
+- **Smart Parsing**: Built-in JSON body parsing, `req.query`, and multipart file uploads (`req.files`).
+- **CLI-First**: Scaffold your project with interactive database choices and optional DX feature flags.
 
 ---
 
@@ -22,39 +25,93 @@ Zerra is designed to be the backend equivalent of Next.js—offering zero config
    ```bash
    npx create-zerra-app my-zerra-app
    ```
-2. **Follow the interactive prompts** to choose your database (SQL, MongoDB, Supabase, or Firebase).
+2. **Follow the interactive prompts**:
+   - Choose your database (SQL, MongoDB, Supabase, or Firebase).
+   - Select the advanced DX features you want (Logging, Routing, Validation, etc.).
+   - Let the CLI auto-install dependencies and initialize Git for you.
+
 3. **Run your server:**
    ```bash
    cd my-zerra-app
-   npm install
    npm run dev
    ```
+
+---
+
+## 🛠️ The Developer Experience (DX)
+
+Zerra comes packed with features to make building APIs joyful. (All of these are opt-in via your `zerra.config.json`!)
+
+### 1. Modern Handlers
+No more manual data streams or strings. Zerra gives you `res.json()`, `res.status()`, and auto-parsed bodies.
+```javascript
+// api/users.js
+module.exports = async (req, res) => {
+  res.cors(); // Easily allow cross-origin requests
+  const name = req.query.name;
+  const data = req.body; // Automatically parsed JSON!
+  res.status(200).json({ success: true, name });
+};
+```
+
+### 2. Dynamic Routing (`req.params`)
+Create a file named `api/users/[id].js`.
+```javascript
+// api/users/[id].js
+module.exports = async (req, res) => {
+  const userId = req.params.id;
+  res.json({ user: userId });
+};
+```
+
+### 3. File-Based Middleware
+Place `_middleware.js` in any folder to run code before the routes in that folder.
+```javascript
+// api/admin/_middleware.js
+module.exports = async (req, res, next) => {
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  await next(); 
+};
+```
+
+### 4. Automatic Input Validation
+Export a `schema` object from your route. Zerra will automatically validate `req.body` and return a clean `400 Bad Request` if it fails.
+```javascript
+module.exports = async (req, res) => {
+  res.json({ success: true, saved: req.body });
+};
+
+module.exports.schema = {
+  email: 'string',
+  age: 'number'
+};
+```
+
+### 5. File Uploads (Multipart)
+Zerra automatically handles `multipart/form-data` requests.
+```javascript
+module.exports = async (req, res) => {
+  const files = req.files; // Array of file buffers!
+  res.json({ uploadedCount: files.length });
+};
+```
+
+### 6. Zero-Config Environment Variables
+Just place a `.env` file at the root of your project. Zerra automatically parses it into `process.env` when the server starts.
 
 ---
 
 ## 📁 Project Structure (Generated App)
 
 ```text
-/api            → Your route handlers (hello.js -> /hello)
+/api            → Your route handlers & middlewares
 /services       → Your business logic (DB clients, loggers, etc.)
-/config         → Database & system configuration
+zerra.config.json → Toggle specific Zerra DX features
+.env            → Environment variables
 server.js       → The Zerra core runtime
 ```
-
-## 🛠️ How Routing Works
-
-Zerra automatically maps files in the `/api` directory to routes. 
-
-**Example:**
-Create a file at `api/greet.js`:
-
-```javascript
-module.exports = (req, res) => {
-  res.end("Hello from Zerra! 🚀");
-};
-```
-
-Access it at: `GET http://localhost:3000/greet`
 
 ---
 
@@ -80,13 +137,13 @@ We love contributors! Zerra is a monorepo managed with npm workspaces.
    ```
 4. **Test the CLI:**
    ```bash
-   zerra-init my-test-app
+   create-zerra-app my-test-app
    ```
 
 ### Project Roadmap
+- [x] Dynamic Routing (e.g., `[id].js`)
+- [x] Middleware System
 - [ ] TypeScript Support
-- [ ] Dynamic Routing (e.g., `[id].js`)
-- [ ] Middleware System
 - [ ] Automatic API Documentation (Swagger)
 
 ---
