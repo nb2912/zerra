@@ -12,7 +12,7 @@ program
   .action(async (projectName) => {
     const targetPath = path.join(process.cwd(), projectName);
 
-    // 1. Ask for Database Preference
+    // 1. Ask for Database Preference and CLI features
     const answers = await inquirer.prompt([
       {
         type: "list",
@@ -26,6 +26,18 @@ program
           { name: "Firebase", value: "js-firebase" },
         ],
       },
+      {
+        type: "confirm",
+        name: "installDeps",
+        message: "Would you like to install dependencies automatically?",
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "initGit",
+        message: "Would you like to initialize a new git repository?",
+        default: true,
+      }
     ]);
 
     const baseTemplatePath = path.join(__dirname, "templates", "js-base");
@@ -70,27 +82,34 @@ program
         await fs.writeJson(pkgPath, pkg, { spaces: 2 });
       }
 
-      console.log(`\n📦 Installing dependencies...`);
       const { execSync } = require("child_process");
       
-      try {
-        execSync("npm install", { cwd: targetPath, stdio: "inherit" });
-      } catch (installErr) {
-        console.warn(`⚠️  Failed to install dependencies automatically. You may need to run 'npm install' manually.`);
+      if (answers.installDeps) {
+        console.log(`\n📦 Installing dependencies...`);
+        try {
+          execSync("npm install", { cwd: targetPath, stdio: "inherit" });
+        } catch (installErr) {
+          console.warn(`⚠️  Failed to install dependencies automatically. You may need to run 'npm install' manually.`);
+        }
       }
 
-      try {
-        execSync("git init", { cwd: targetPath, stdio: "ignore" });
-        execSync("git add .", { cwd: targetPath, stdio: "ignore" });
-        execSync('git commit -m "Initial commit from create-zerra-app"', { cwd: targetPath, stdio: "ignore" });
-        console.log(`🌱 Initialized a git repository.`);
-      } catch (gitErr) {
-        // Ignore git errors (e.g., if git is not installed)
+      if (answers.initGit) {
+        try {
+          execSync("git init", { cwd: targetPath, stdio: "ignore" });
+          execSync("git add .", { cwd: targetPath, stdio: "ignore" });
+          execSync('git commit -m "Initial commit from create-zerra-app"', { cwd: targetPath, stdio: "ignore" });
+          console.log(`🌱 Initialized a git repository.`);
+        } catch (gitErr) {
+          // Ignore git errors
+        }
       }
 
       console.log(`\n🚀 Zerra project created successfully at ${targetPath}`);
       console.log(`\nNext steps:`);
       console.log(`  cd ${projectName}`);
+      if (!answers.installDeps) {
+        console.log(`  npm install`);
+      }
       console.log(`  npm run dev\n`);
     } catch (err) {
       console.error("❌ Error creating project:", err);
