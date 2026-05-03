@@ -5,32 +5,43 @@ const path = require("path");
 function startServer(port = 3000) {
   const apiDir = path.join(process.cwd(), "api");
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     const { url, method } = req;
     
-    // Simple path cleaning: remove trailing slashes and get file path
-    const cleanPath = url === "/" ? "/index" : url;
+    // 1. Enhanced DX: Add res.status and res.json helpers
+    res.status = (code) => {
+      res.statusCode = code;
+      return res;
+    };
+
+    res.json = (data) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(data));
+    };
+
+    // 2. Enhanced DX: Parse query parameters
+    const parsedUrl = new URL(url, `http://localhost:${port}`);
+    req.query = Object.fromEntries(parsedUrl.searchParams);
+    req.path = parsedUrl.pathname;
+
+    const cleanPath = req.path === "/" ? "/index" : req.path;
     const filePath = path.join(apiDir, `${cleanPath}.js`);
 
     if (fs.existsSync(filePath)) {
       try {
-        // Clear cache for hot-reloading in dev (optional, but good for DX)
         delete require.cache[require.resolve(filePath)];
         const handler = require(filePath);
 
         if (typeof handler === "function") {
-          handler(req, res);
+          await handler(req, res);
         } else {
-          res.statusCode = 500;
-          res.end(`Error: Handler in ${cleanPath}.js must be a function.`);
+          res.status(500).json({ error: `Handler in ${cleanPath}.js must be a function.` });
         }
       } catch (err) {
-        res.statusCode = 500;
-        res.end(`Runtime Error: ${err.message}`);
+        res.status(500).json({ error: "Runtime Error", message: err.message });
       }
     } else {
-      res.statusCode = 404;
-      res.end(`Route ${url} not found (No file at ${filePath})`);
+      res.status(404).json({ error: "Not Found", route: url, expectedFile: filePath });
     }
   });
 

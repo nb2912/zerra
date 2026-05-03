@@ -2,5 +2,9 @@ const db = require("../services/db");
 
 module.exports = async (req, res) => {
   const users = await db.find("users", {});
-  res.end(`Hello from Zerra! MongoDB is connected. Found ${users.length} documents.`);
+  res.json({
+    message: "Hello from Zerra! MongoDB is connected.",
+    count: users.length,
+    users: users
+  });
 };
