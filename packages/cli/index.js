@@ -70,10 +70,27 @@ program
         await fs.writeJson(pkgPath, pkg, { spaces: 2 });
       }
 
-      console.log(`🚀 Zerra project created at ${targetPath}`);
+      console.log(`\n📦 Installing dependencies...`);
+      const { execSync } = require("child_process");
+      
+      try {
+        execSync("npm install", { cwd: targetPath, stdio: "inherit" });
+      } catch (installErr) {
+        console.warn(`⚠️  Failed to install dependencies automatically. You may need to run 'npm install' manually.`);
+      }
+
+      try {
+        execSync("git init", { cwd: targetPath, stdio: "ignore" });
+        execSync("git add .", { cwd: targetPath, stdio: "ignore" });
+        execSync('git commit -m "Initial commit from create-zerra-app"', { cwd: targetPath, stdio: "ignore" });
+        console.log(`🌱 Initialized a git repository.`);
+      } catch (gitErr) {
+        // Ignore git errors (e.g., if git is not installed)
+      }
+
+      console.log(`\n🚀 Zerra project created successfully at ${targetPath}`);
       console.log(`\nNext steps:`);
       console.log(`  cd ${projectName}`);
-      console.log(`  npm install`);
       console.log(`  npm run dev\n`);
     } catch (err) {
       console.error("❌ Error creating project:", err);
