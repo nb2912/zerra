@@ -5,6 +5,6 @@
     "dev": "node server.js"
   },
   "dependencies": {
-    "zerra-core": "^1.2.0"
+    "zerra-core": "^1.2.1"
   }
 }
