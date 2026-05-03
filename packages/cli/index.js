@@ -28,20 +28,14 @@ program
       },
       {
         type: "confirm",
-        name: "installDeps",
-        message: "Would you like to install dependencies automatically?",
-        default: true,
-      },
-      {
-        type: "confirm",
-        name: "initGit",
-        message: "Would you like to initialize a new git repository?",
+        name: "includeAuth",
+        message: "Include Authentication Starter (JWT + Bcrypt)?",
         default: true,
       },
       {
         type: "checkbox",
         name: "features",
-        message: "Which advanced Zerra features would you like to enable?",
+        message: "Select advanced features to enable:",
         choices: [
           { name: "Beautiful Request Logging", value: "logging", checked: true },
           { name: "Dynamic Routing ([id].js)", value: "dynamicRouting", checked: true },
@@ -52,13 +46,49 @@ program
           { name: "Smart Error Handling (_error.js)", value: "errors", checked: true },
           { name: "Dev Dashboard (/__zerra)", value: "dashboard", checked: true }
         ]
+      },
+      {
+        type: "confirm",
+        name: "installDeps",
+        message: "Install dependencies automatically?",
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "initGit",
+        message: "Initialize git repository?",
+        default: true,
       }
     ]);
 
+    // 2. Project Preview Summary
+    console.log(`\n📋  Project Configuration:`);
+    console.log(`   - Project Name: \x1b[36m${projectName}\x1b[0m`);
+    console.log(`   - Database:     \x1b[33m${answers.database.replace('js-', '')}\x1b[0m`);
+    console.log(`   - Auth Starter: \x1b[32m${answers.includeAuth ? 'Enabled' : 'Disabled'}\x1b[0m`);
+    console.log(`   - Features:     \x1b[35m${answers.features.join(', ') || 'None'}\x1b[0m`);
+    console.log(`   - Auto-Install: \x1b[32m${answers.installDeps ? 'Yes' : 'No'}\x1b[0m`);
+    console.log(`   - Git Init:     \x1b[32m${answers.initGit ? 'Yes' : 'No'}\x1b[0m`);
+
+    const { confirmProceed } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirmProceed",
+        message: "Does this look correct?",
+        default: true,
+      }
+    ]);
+
+    if (!confirmProceed) {
+      console.log("\n❌  Project creation cancelled.\n");
+      return;
+    }
+
     const baseTemplatePath = path.join(__dirname, "templates", "js-base");
     const dbTemplatePath = path.join(__dirname, "templates", answers.database);
+    const authTemplatePath = path.join(__dirname, "templates", "js-auth");
 
-    console.log(`\n🏗️  Generating Zerra project: ${projectName}...`);
+    console.log(`\n🏗️  Building your Zerra application...`);
 
     try {
       // 1. Copy the Base Template (Foundation)
@@ -85,6 +115,28 @@ program
           basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(dbPkg.dependencies || {}) };
           basePkg.scripts = { ...(basePkg.scripts || {}), ...(dbPkg.scripts || {}) };
 
+          await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
+        }
+      }
+
+        }
+      }
+
+      // 2.5 Overlay Auth Starter (if selected)
+      if (answers.includeAuth && fs.existsSync(authTemplatePath)) {
+        console.log(`   🔐 Adding Auth Starter...`);
+        await fs.copy(authTemplatePath, targetPath, {
+          overwrite: true,
+          filter: (src) => !src.endsWith("package.json"),
+        });
+
+        const authPkgPath = path.join(authTemplatePath, "package.json");
+        const targetPkgPath = path.join(targetPath, "package.json");
+
+        if (fs.existsSync(authPkgPath) && fs.existsSync(targetPkgPath)) {
+          const basePkg = await fs.readJson(targetPkgPath);
+          const authPkg = await fs.readJson(authPkgPath);
+          basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(authPkg.dependencies || {}) };
           await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
         }
       }

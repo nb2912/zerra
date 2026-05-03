@@ -134,6 +134,13 @@ module.exports = (zerra) => {
 };
 ```
 
+### 10. Authentication Starter (JWT)
+Scaffold a complete authentication system with one click. Includes:
+- `api/auth/register.js` & `api/auth/login.js`
+- `api/auth/me.js` (Session check)
+- `api/protected/_middleware.js` (Route guard)
+- Pre-configured `bcryptjs` and `jsonwebtoken` support.
+
 ---
 
 ## 📁 Project Structure (Generated App)
@@ -176,6 +183,8 @@ We love contributors! Zerra is a monorepo managed with npm workspaces.
 ### Project Roadmap
 - [x] Dynamic Routing (e.g., `[id].js`)
 - [x] Middleware System
+- [x] Built-in Authentication Starter
+- [x] Dev Mode Dashboard
 - [ ] TypeScript Support
 - [ ] Automatic API Documentation (Swagger)
 
