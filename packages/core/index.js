@@ -232,84 +232,180 @@ function startServer(port = 3000) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(`
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
           <head>
-            <title>Zerra Dashboard</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Zerra Dev Dashboard</title>
             <style>
-              body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background: #f9f9f9; }
-              h1 { color: #000; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-              section { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; }
-              h2 { margin-top: 0; font-size: 1.2rem; }
-              ul { padding-left: 20px; }
-              li { margin-bottom: 5px; }
-              a { color: #0070f3; text-decoration: none; }
-              a:hover { text-decoration: underline; }
-              .badge { font-size: 0.8rem; background: #000; color: #fff; padding: 2px 6px; border-radius: 3px; vertical-align: middle; }
+              :root {
+                --primary: #0070f3;
+                --bg: #fafafa;
+                --card-bg: #ffffff;
+                --text: #171717;
+                --text-light: #666;
+                --border: #eaeaea;
+                --success: #0070f3;
+                --warning: #f5a623;
+                --error: #ff0000;
+              }
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                line-height: 1.5; 
+                background: var(--bg); 
+                color: var(--text);
+                margin: 0;
+                padding: 0;
+              }
+              header {
+                background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+                color: #fff;
+                padding: 16px 40px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+              }
+              header h1 { 
+                margin: 0; 
+                font-size: 1.2rem; 
+                display: flex; 
+                align-items: center; 
+                gap: 12px; 
+                letter-spacing: 2px;
+                font-weight: 800;
+              }
+              header h1 span.console-text { 
+                font-weight: 300; 
+                opacity: 0.6; 
+                font-size: 0.9rem; 
+                letter-spacing: 0;
+                border-left: 1px solid rgba(255,255,255,0.2);
+                padding-left: 12px;
+              }
+              .badge { font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 20px; font-weight: normal; }
+              
+              main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+              
+              .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+              @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+              
+              section { 
+                background: var(--card-bg); 
+                padding: 24px; 
+                border-radius: 12px; 
+                border: 1px solid var(--border);
+                box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+              }
+              h2 { margin-top: 0; font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; }
+              
+              ul { list-style: none; padding: 0; margin: 0; }
+              li { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+              
+              .route-link { color: var(--primary); text-decoration: none; font-weight: 500; font-family: monospace; font-size: 1rem; }
+              .route-link:hover { text-decoration: underline; }
+              
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th { text-align: left; padding: 12px 8px; border-bottom: 2px solid var(--border); font-size: 0.85rem; color: var(--text-light); }
+              td { padding: 12px 8px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+              
+              .status-badge { 
+                padding: 4px 10px; 
+                border-radius: 6px; 
+                font-size: 0.75rem; 
+                font-weight: bold; 
+                color: #fff;
+              }
+              
+              .env-item { background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #444; }
+              footer { text-align: center; margin-top: 40px; padding-bottom: 40px; color: var(--text-light); font-size: 0.85rem; }
             </style>
           </head>
           <body>
-            <h1>🚀 Zerra Dev Dashboard <span class="badge">v1.1.1</span></h1>
-            
-            <section>
-              <h2>📂 Active Routes</h2>
-              <ul>${routeList || '<li>No routes found in /api</li>'}</ul>
-            </section>
+            <main style="margin-top: 20px;">
+              <div class="grid">
+                <section>
+                  <h2>📂 Active Routes</h2>
+                  <ul>
+                    ${routes.length > 0 ? routes.map(r => `
+                      <li>
+                        <a href="${r}" class="route-link">${r}</a>
+                        <span style="font-size: 0.8rem; color: #999;">GET</span>
+                      </li>
+                    `).join('') : '<li style="color:#999">No routes found in /api</li>'}
+                  </ul>
+                </section>
 
-            <section>
-              <h2>📊 Recent Activity (Live Logs)</h2>
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="text-align: left; border-bottom: 2px solid #eee;">
-                    <th style="padding: 10px 5px;">Method</th>
-                    <th style="padding: 10px 5px;">Path</th>
-                    <th style="padding: 10px 5px;">Status</th>
-                    <th style="padding: 10px 5px;">Time</th>
-                    <th style="padding: 10px 5px;">Duration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${recentRequests.map(req => {
-                    const statusColor = req.statusCode >= 500 ? '#ff4d4f' : req.statusCode >= 400 ? '#faad14' : '#52c41a';
-                    return `
-                      <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px 5px;"><strong>${req.method}</strong></td>
-                        <td style="padding: 8px 5px; font-family: monospace; color: #666;">${req.path}</td>
-                        <td style="padding: 8px 5px;"><span class="badge" style="background: ${statusColor}">${req.statusCode}</span></td>
-                        <td style="padding: 8px 5px; font-size: 0.85rem; color: #999;">${req.timestamp}</td>
-                        <td style="padding: 8px 5px; font-size: 0.85rem; color: #999;">${req.duration}ms</td>
-                      </tr>
-                    `;
-                  }).join('') || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #999;">No requests yet. Try hitting an endpoint!</td></tr>'}
-                </tbody>
-              </table>
-              <p style="text-align: right; margin-top: 10px;"><small><em>Dashboard refreshes automatically every 5s</em></small></p>
-              <script>setTimeout(() => location.reload(), 5000);</script>
-            </section>
+                <section>
+                  <h2>⚙️ Features</h2>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    ${Object.entries(config.features).map(([k, v]) => `
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                        <span>${v ? '✅' : '❌'}</span>
+                        <span style="color: ${v ? 'inherit' : '#999'}">${k}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </section>
+              </div>
 
-            <section>
-              <h2>⚙️ Enabled Features</h2>
-              <ul>${featureList}</ul>
-            </section>
+              <section style="margin-bottom: 20px;">
+                <h2>📊 Recent Activity</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>METHOD</th>
+                      <th>PATH</th>
+                      <th>STATUS</th>
+                      <th>TIME</th>
+                      <th>DURATION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${recentRequests.map(req => {
+                      const color = req.statusCode >= 500 ? 'var(--error)' : req.statusCode >= 400 ? 'var(--warning)' : 'var(--success)';
+                      return `
+                        <tr>
+                          <td><strong>${req.method}</strong></td>
+                          <td style="font-family: monospace; color: #444;">${req.path}</td>
+                          <td><span class="status-badge" style="background: ${color}">${req.statusCode}</span></td>
+                          <td style="color: #888;">${req.timestamp}</td>
+                          <td style="color: #888;">${req.duration}ms</td>
+                        </tr>
+                      `;
+                    }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #999;">Waiting for requests...</td></tr>'}
+                  </tbody>
+                </table>
+              </section>
 
-            <section>
-              <h2>🔐 Environment Variables</h2>
-              <ul>${
-                Object.keys(process.env)
-                  .filter(k => {
-                    // Show if it was in .env OR it's a common important one (PORT, NODE_ENV)
-                    // AND hide common system noise
+              <section>
+                <h2>🔐 Environment</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                  ${Object.keys(process.env).filter(k => {
                     const isCustom = customEnvKeys.has(k);
-                    const isImportant = ['PORT', 'NODE_ENV', 'HOST'].includes(k);
+                    const isImportant = ['PORT', 'NODE_ENV'].includes(k);
                     const isSystem = /^(ALLUSERSPROFILE|APPDATA|COMPUTERNAME|ComSpec|Common|DriverData|HOMEDRIVE|HOMEPATH|LOCALAPPDATA|LOGONSERVER|NUMBER_OF_PROCESSORS|OS|Path|PATHEXT|PROCESSOR|Program|PSModulePath|PUBLIC|System|TEMP|TMP|USER|windir|ZES_|VSCODE_|ANTIGRAVITY_)/i.test(k);
-                    
                     return (isCustom || isImportant) && !isSystem;
-                  })
-                  .map(k => `<li><strong>${k}</strong>: <span class="badge" style="background:#eee; color:#666; font-family:monospace;">${process.env[k]}</span></li>`)
-                  .join('') || '<li>No custom env vars loaded from .env</li>'
-              }</ul>
-            </section>
+                  }).map(k => `
+                    <div style="background: #f9f9f9; border: 1px solid #eee; padding: 10px 15px; border-radius: 8px;">
+                      <div style="font-size: 0.7rem; color: #999; margin-bottom: 4px; font-weight: bold;">${k}</div>
+                      <div class="env-item">${process.env[k]}</div>
+                    </div>
+                  `).join('') || '<div style="color:#999">No custom variables loaded</div>'}
+                </div>
+              </section>
+            </main>
 
-            <p><small>Zerra Engine is running in development mode.</small></p>
+            <script>
+              // Soft refresh every 5 seconds
+              setTimeout(() => {
+                window.location.reload();
+              }, 5000);
+            </script>
           </body>
         </html>
       `);
