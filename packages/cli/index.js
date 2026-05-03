@@ -49,7 +49,8 @@ program
           { name: "Auto-load Environment Variables (.env)", value: "dotenv", checked: true },
           { name: "Automatic Input Validation (Schema)", value: "validation", checked: true },
           { name: "Multipart File Uploads (req.files)", value: "multipart", checked: true },
-          { name: "Smart Error Handling (_error.js)", value: "errors", checked: true }
+          { name: "Smart Error Handling (_error.js)", value: "errors", checked: true },
+          { name: "Dev Dashboard (/__zerra)", value: "dashboard", checked: true }
         ]
       }
     ]);
@@ -104,11 +105,12 @@ program
         dotenv: answers.features.includes('dotenv'),
         validation: answers.features.includes('validation'),
         multipart: answers.features.includes('multipart'),
-        errors: answers.features.includes('errors')
+        errors: answers.features.includes('errors'),
+        dashboard: answers.features.includes('dashboard')
       };
       
       const configJsonPath = path.join(targetPath, 'zerra.config.json');
-      await fs.writeJson(configJsonPath, { features: featureConfig }, { spaces: 2 });
+      await fs.writeJson(configJsonPath, { features: featureConfig, plugins: [] }, { spaces: 2 });
 
       const { execSync } = require("child_process");
       

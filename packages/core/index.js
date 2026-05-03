@@ -12,8 +12,10 @@ function startServer(port = 3000) {
       dotenv: true,
       validation: true,
       multipart: true,
-      errors: true
-    }
+      errors: true,
+      dashboard: true
+    },
+    plugins: []
   };
   if (fs.existsSync(configPath)) {
     try {
@@ -41,6 +43,31 @@ function startServer(port = 3000) {
         }
       });
     }
+  }
+
+  const globalMiddleware = [];
+  const resDecorators = {};
+  const reqDecorators = {};
+
+  const zerra = {
+    use: (fn) => globalMiddleware.push(fn),
+    decorate: (target, name, fn) => {
+      if (target === 'res') resDecorators[name] = fn;
+      if (target === 'req') reqDecorators[name] = fn;
+    },
+    config
+  };
+
+  // Load Plugins
+  if (config.plugins && Array.isArray(config.plugins)) {
+    config.plugins.forEach(pluginPath => {
+      try {
+        const plugin = require(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
+        if (typeof plugin === 'function') plugin(zerra);
+      } catch (e) {
+        console.error(`❌ Failed to load plugin: ${pluginPath}`, e);
+      }
+    });
   }
 
   const apiDir = path.join(process.cwd(), "api");
@@ -76,6 +103,10 @@ function startServer(port = 3000) {
     const parsedUrl = new URL(url, `http://localhost:${port}`);
     req.query = Object.fromEntries(parsedUrl.searchParams);
     req.path = parsedUrl.pathname;
+
+    // Apply Decorators
+    Object.entries(resDecorators).forEach(([name, fn]) => { res[name] = fn.bind(res); });
+    Object.entries(reqDecorators).forEach(([name, fn]) => { req[name] = fn.bind(req); });
 
     // 3. Enhanced DX: CORS Helper
     res.cors = (options = { origin: '*', methods: 'GET,POST,PUT,DELETE,OPTIONS' }) => {
@@ -148,6 +179,73 @@ function startServer(port = 3000) {
 
     req.params = {};
     const cleanPath = req.path === "/" ? "/index" : req.path;
+
+    // 10. Enhanced DX: Dev Dashboard
+    if (config.features.dashboard && cleanPath === '/__zerra') {
+      const getRoutes = (dir, base = '') => {
+        let results = [];
+        if (!fs.existsSync(dir)) return results;
+        const list = fs.readdirSync(dir);
+        list.forEach(file => {
+          const filePath = path.join(dir, file);
+          const stat = fs.statSync(filePath);
+          if (stat && stat.isDirectory()) {
+            results = results.concat(getRoutes(filePath, path.join(base, file)));
+          } else if (file.endsWith('.js') && !file.startsWith('_')) {
+            const route = path.join(base, file).replace(/\\/g, '/').replace('.js', '');
+            results.push(route === 'index' ? '/' : `/${route}`);
+          }
+        });
+        return results;
+      };
+
+      const routes = getRoutes(apiDir);
+      const featureList = Object.entries(config.features)
+        .map(([k, v]) => `<li><strong>${k}</strong>: ${v ? '✅' : '❌'}</li>`).join('');
+      const routeList = routes.map(r => `<li><a href="${r}">${r}</a></li>`).join('');
+
+      res.setHeader('Content-Type', 'text/html');
+      return res.end(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Zerra Dashboard</title>
+            <style>
+              body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background: #f9f9f9; }
+              h1 { color: #000; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+              section { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; }
+              h2 { margin-top: 0; font-size: 1.2rem; }
+              ul { padding-left: 20px; }
+              li { margin-bottom: 5px; }
+              a { color: #0070f3; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+              .badge { font-size: 0.8rem; background: #000; color: #fff; padding: 2px 6px; border-radius: 3px; vertical-align: middle; }
+            </style>
+          </head>
+          <body>
+            <h1>🚀 Zerra Dev Dashboard <span class="badge">v1.1.1</span></h1>
+            
+            <section>
+              <h2>📂 Active Routes</h2>
+              <ul>${routeList || '<li>No routes found in /api</li>'}</ul>
+            </section>
+
+            <section>
+              <h2>⚙️ Enabled Features</h2>
+              <ul>${featureList}</ul>
+            </section>
+
+            <section>
+              <h2>🔐 Environment Variables</h2>
+              <ul>${Object.keys(process.env).filter(k => !k.startsWith('npm_') && !k.startsWith('NODE_')).map(k => `<li>${k}</li>`).join('') || '<li>No custom env vars loaded</li>'}</ul>
+            </section>
+
+            <p><small>Zerra Engine is running in development mode.</small></p>
+          </body>
+        </html>
+      `);
+    }
+
     let filePath = path.join(apiDir, `${cleanPath}.js`);
 
     // 6. Enhanced DX: Dynamic Routing ([id].js)
@@ -262,7 +360,17 @@ function startServer(port = 3000) {
           }
         };
 
-        await runNext();
+        // 11. Enhanced DX: Global Middleware (Plugins)
+        let globalIndex = 0;
+        const runGlobal = async () => {
+          if (globalIndex < globalMiddleware.length) {
+            await globalMiddleware[globalIndex++](req, res, runGlobal);
+          } else {
+            await runNext();
+          }
+        };
+
+        await runGlobal();
 
       } catch (err) {
         if (config.features.errors) {

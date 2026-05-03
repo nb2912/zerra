@@ -116,6 +116,24 @@ module.exports = async (err, req, res) => {
 You can also throw custom status codes from any route:
 `throw { status: 403, message: "Forbidden Access" };`
 
+### 8. Dev Dashboard
+Access a simple, clean dashboard at `/__zerra` to see all your registered routes, enabled features, and environment status.
+
+### 9. Plugin System (Minimal)
+Extend Zerra by adding plugins to your `zerra.config.json`. A plugin can add global middleware or decorate `req`/`res`.
+```javascript
+// Example plugin
+module.exports = (zerra) => {
+  zerra.use((req, res, next) => {
+    console.log("Global Plugin Middleware!");
+    next();
+  });
+  zerra.decorate('res', 'success', function(data) {
+    this.status(200).json({ status: 'ok', data });
+  });
+};
+```
+
 ---
 
 ## 📁 Project Structure (Generated App)
