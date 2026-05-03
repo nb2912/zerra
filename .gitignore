@@ -1,0 +1,6 @@
+node_modules
+.env
+*.log
+.npmrc
+dist
+package-lock.json

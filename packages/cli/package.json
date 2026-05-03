@@ -1,0 +1,21 @@
+{
+  "name": "create-zerra-app",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "create-zerra-app": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "commander": "^14.0.3",
+    "fs-extra": "^11.3.4",
+    "inquirer": "^8.2.7"
+  }
+}
