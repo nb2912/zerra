@@ -36,7 +36,7 @@ Zerra is designed to be the backend equivalent of Next.js—offering zero config
 
 ```text
 /api            → Your route handlers (hello.js -> /hello)
-/services       → Your business logic (future)
+/services       → Your business logic (DB clients, loggers, etc.)
 /config         → Database & system configuration
 server.js       → The Zerra core runtime
 ```
