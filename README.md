@@ -93,4 +93,4 @@ We love contributors! Zerra is a monorepo managed with npm workspaces.
 
 ## ⚖️ License
 
-MIT © [NIHAL DASANIWAL](https://github.com/nb2912)
+MIT © [NIHAL BASANIWAL](https://github.com/nb2912)
