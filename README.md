@@ -130,8 +130,13 @@ module.exports = async (err, req, res) => {
 You can also throw custom status codes from any route:
 `throw { status: 403, message: "Forbidden Access" };`
 
-### 8. Dev Dashboard
-Access a simple, clean dashboard at `/__zerra` to see all your registered routes, enabled features, and environment status.
+### 8. Zerra Dev Console
+Access a powerful, modern dashboard at `/__zerra`. It's your backend's command center:
+- **API Playground**: Test any route with `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` directly from the browser.
+- **Smart Presets**: If you export a `schema`, the playground automatically generates a sample JSON body for you.
+- **Live Request Logs**: See a real-time feed of the last 20 requests with status codes and response times.
+- **Environment Monitor**: Verify that your `.env` variables are loaded correctly.
+- **Strict Validation**: Zerra automatically enforces your schemas and returns clean `400 Bad Request` errors if data is missing.
 
 ### 9. Plugin System (Minimal)
 Extend Zerra by adding plugins to your `zerra.config.json`. A plugin can add global middleware or decorate `req`/`res`.
@@ -198,9 +203,11 @@ We love contributors! Zerra is a monorepo managed with npm workspaces.
 - [x] Dynamic Routing (e.g., `[id].js`)
 - [x] Middleware System
 - [x] Built-in Authentication Starter
-- [x] Dev Mode Dashboard
+- [x] Modern Dev Console (with Live Logs & Playground)
 - [x] TypeScript Support
-- [ ] Automatic API Documentation (Swagger)
+- [ ] Automatic API Documentation (Swagger/OpenAPI)
+- [ ] Database Migration CLI
+- [ ] Built-in WebSocket Support
 
 ---
 
