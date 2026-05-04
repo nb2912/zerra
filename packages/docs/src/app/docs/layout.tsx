@@ -32,6 +32,7 @@ const DOCS_NAV = [
   },
 ];
 
+import Search from "@/components/Search";
 import HelpfulFeedback from "@/components/HelpfulFeedback";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
@@ -44,20 +45,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         {/* Sidebar */}
         <aside className="hidden lg:block w-64 h-[calc(100vh-6rem)] overflow-y-auto sticky top-24 pb-12 shrink-0 scrollbar-hide">
           <div className="flex flex-col gap-8">
-            {/* Search Placeholder */}
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-white transition-colors">
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              </div>
-              <input 
-                type="text" 
-                placeholder="Search documentation..." 
-                className="w-full bg-zinc-900/50 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm text-zinc-300 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all"
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:block">
-                <kbd className="text-[10px] bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded border border-white/5 font-sans">⌘K</kbd>
-              </div>
-            </div>
+            <Search />
 
             {DOCS_NAV.map((section) => (
               <div key={section.title} className="flex flex-col gap-3">

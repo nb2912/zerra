@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Code } from "lucide-react";
 
+import Search from "./Search";
+
 export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
@@ -23,11 +25,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-500 text-sm cursor-pointer hover:border-white/20 transition-colors">
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <span>Search...</span>
-            <kbd className="ml-4 text-[10px] font-sans opacity-50">⌘K</kbd>
-          </div>
+          <Search />
 
           <Link 
             href="/docs/getting-started" 
