@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "publish:all": "cd packages/core && npm publish --access public && cd ../cli && npm publish --access public"
+    "publish:all": "cd packages/core && npm publish --access public && cd ../cli && npm publish --access public",
+    "docs:dev": "npm run dev -w packages/docs"
   },
   "keywords": [],
   "author": "",
