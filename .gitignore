@@ -25,3 +25,8 @@ pnpm-debug.log*
 
 # Coverage
 coverage/
+
+# AI / Agent Files
+AGENTS.md
+CLAUDE.md
+.gemini/
