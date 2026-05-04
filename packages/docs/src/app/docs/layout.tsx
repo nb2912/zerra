@@ -1,5 +1,8 @@
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const DOCS_NAV = [
   {
@@ -32,6 +35,8 @@ const DOCS_NAV = [
 import HelpfulFeedback from "@/components/HelpfulFeedback";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
@@ -58,15 +63,25 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               <div key={section.title} className="flex flex-col gap-3">
                 <h4 className="text-[12px] font-bold text-zinc-500 uppercase tracking-[0.1em]">{section.title}</h4>
                 <div className="flex flex-col gap-0.5 border-l border-white/5 ml-0.5 pl-4">
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="text-[14px] text-zinc-400 hover:text-white py-1.5 transition-colors relative group"
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`text-[14px] py-1.5 transition-all relative group flex items-center gap-2 ${
+                          isActive 
+                            ? "text-white font-bold" 
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="absolute -left-4 w-1 h-4 bg-white rounded-r-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                        )}
+                        {item.title}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}
