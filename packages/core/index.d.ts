@@ -28,6 +28,7 @@ export interface ZerraConfig {
   features: {
     logging?: boolean;
     dynamicRouting?: boolean;
+    
     middleware?: boolean;
     dotenv?: boolean;
     validation?: boolean;
