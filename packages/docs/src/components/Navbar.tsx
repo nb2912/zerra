@@ -24,6 +24,7 @@ export default function Navbar() {
             </Link>
             <Link href="/showcase" className="hover:text-foreground transition-colors">Showcase</Link>
             <Link href="/benchmarks" className="hover:text-foreground transition-colors">Benchmarks</Link>
+            <Link href="/compare" className="hover:text-foreground transition-colors">Compare</Link>
           </div>
         </div>
 
