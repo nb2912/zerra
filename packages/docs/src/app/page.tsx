@@ -1,119 +1,141 @@
 import Navbar from "@/components/Navbar";
 import { Stats, FeatureCard } from "@/components/Marketing";
-import { ArrowRight, Terminal, Zap, Shield, Layout, Cpu, Database, Globe } from "lucide-react";
+import { ArrowRight, Terminal, Zap, Shield, Layout, Cpu, Database, Globe, Play } from "lucide-react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
 
 export default function Home() {
   return (
-    <main className="min-h-screen pt-32 pb-20 overflow-x-hidden selection:bg-white/10 selection:text-white">
+    <main className="min-h-screen pt-32 pb-20 overflow-x-hidden bg-background text-foreground selection:bg-foreground/10">
       <Navbar />
       
       {/* Dynamic Background Glows */}
-      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-white/[0.03] blur-[120px] rounded-full -z-10 animate-pulse" />
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1200px] h-[700px] bg-foreground/[0.03] blur-[150px] rounded-full -z-10 animate-pulse" />
       
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 text-center mb-48 relative">
-        <h1 className="text-7xl md:text-9xl font-black tracking-tighter mb-10 bg-gradient-to-b from-white via-white to-zinc-600 bg-clip-text text-transparent leading-[0.9]">
-          Backend <br /> Simplified.
+      <section className="max-w-7xl mx-auto px-6 text-center mb-40 relative pt-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-border text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-8 hover:bg-foreground/10 transition-colors cursor-pointer">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          Zerra v1.0 is now live
+        </div>
+
+        <h1 className="text-6xl md:text-[140px] font-black tracking-tighter mb-8 bg-gradient-to-b from-foreground via-foreground/90 to-foreground/40 bg-clip-text text-transparent leading-[0.85]">
+          Backend. <br /> Perfected.
         </h1>
         
-        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-14 leading-relaxed font-medium">
+        <p className="text-xl md:text-2xl text-zinc-500 max-w-3xl mx-auto mb-16 leading-relaxed font-medium">
           The production-grade framework for building APIs at lightspeed. 
-          Zero-config, type-safe, and CLI-first.
+          Zero-config, fully type-safe, and natively powered by a CLI-first architecture.
         </p>
 
-        <div className="flex flex-col md:flex-row items-center justify-center gap-5 mb-32">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-32">
           <Link 
             href="/docs" 
-            className="w-full md:w-auto bg-white text-black px-10 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all hover:shadow-[0_0_40px_rgba(255,255,255,0.15)] active:scale-95"
+            className="w-full md:w-auto bg-foreground text-background px-10 py-5 rounded-full font-black flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.15)] active:scale-95 text-lg"
           >
-            Get Started <ArrowRight size={20} />
+            Start Building <ArrowRight size={20} />
           </Link>
-          <div className="w-full md:w-auto bg-black/40 border border-white/10 rounded-xl px-6 py-4 font-mono text-sm text-zinc-300 flex items-center justify-between gap-8 backdrop-blur-xl group hover:border-white/20 transition-all hover:bg-black/60 shadow-2xl">
-            <span className="flex items-center gap-3">
-              <span className="text-zinc-600">$</span>
-              <span className="group-hover:text-white transition-colors">npx create-zerra-app@latest</span>
+          <div className="w-full md:w-auto bg-foreground/[0.02] border border-border rounded-full px-8 py-5 font-mono text-sm text-zinc-400 flex items-center justify-between gap-8 backdrop-blur-2xl group hover:border-foreground/20 transition-all shadow-2xl">
+            <span className="flex items-center gap-4">
+              <span className="text-zinc-600 font-bold">$</span>
+              <span className="group-hover:text-foreground transition-colors font-medium">npx create-zerra-app@latest</span>
             </span>
             <CopyButton text="npx create-zerra-app@latest" />
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto border-t border-white/5 pt-16">
-          <Stats value="~45ms" label="Startup" />
-          <Stats value="<1s" label="Build" />
-          <Stats value="0" label="Config" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 max-w-5xl mx-auto border-t border-border pt-20">
+          <Stats value="~45ms" label="Cold Start" />
+          <Stats value="<1s" label="Build Time" />
+          <Stats value="Zero" label="Boilerplate" />
           <Stats value="100%" label="Type-Safe" />
         </div>
       </section>
 
       {/* Bento Feature Grid */}
-      <section className="max-w-7xl mx-auto px-4 mb-48">
+      <section className="max-w-7xl mx-auto px-6 mb-48">
         <div className="text-center mb-24">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">Unmatched DX.</h2>
-          <p className="text-zinc-500 text-lg">Every feature is designed to keep you in the flow.</p>
+          <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-6">Unmatched DX.</h2>
+          <p className="text-zinc-500 text-xl max-w-2xl mx-auto">Every single feature is obsessively designed to keep you in the flow and ship faster.</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[300px]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 auto-rows-[340px]">
           {/* Large Feature */}
-          <div className="md:col-span-8 relative group overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/20 p-10 flex flex-col justify-end hover:bg-zinc-900/40 transition-all duration-500">
-            <div className="absolute top-10 right-10 opacity-20 group-hover:opacity-40 transition-opacity">
-              <Layout size={120} strokeWidth={1} />
+          <div className="md:col-span-8 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <div className="absolute top-12 right-12 text-zinc-800 group-hover:text-zinc-700 transition-colors">
+              <Layout size={140} strokeWidth={1} />
             </div>
-            <h3 className="text-3xl font-bold mb-4">File-based Routing</h3>
-            <p className="text-zinc-400 max-w-md leading-relaxed">
-              Define your API structure by creating files. Folders are paths, files are endpoints. 
-              Supports index files, dynamic parameters, and catch-all routes out of the box.
+            <h3 className="text-4xl font-black mb-4 tracking-tight">File-based Routing</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-lg leading-relaxed text-lg">
+              Define your API structure simply by creating files. Folders become paths, files become endpoints. 
+              Supports index routing, dynamic parameters, and catch-all routes natively.
             </p>
           </div>
 
           {/* Small Feature */}
-          <div className="md:col-span-4 relative group overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/20 p-10 flex flex-col justify-end hover:bg-zinc-900/40 transition-all duration-500">
-             <div className="absolute top-10 right-10 opacity-20 group-hover:opacity-40 transition-opacity">
-              <Zap size={64} strokeWidth={1} />
+          <div className="md:col-span-4 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+             <div className="absolute top-12 right-12 text-zinc-800 group-hover:text-zinc-700 transition-colors">
+              <Zap size={80} strokeWidth={1} />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Instant Boot</h3>
-            <p className="text-sm text-zinc-400">Under 50ms startup time. Fastest in the ecosystem.</p>
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Instant Boot</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">Under 50ms startup time. The fastest in the entire Node.js ecosystem.</p>
           </div>
 
           {/* Another Small Feature */}
-          <div className="md:col-span-4 relative group overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/20 p-10 flex flex-col justify-end hover:bg-zinc-900/40 transition-all duration-500">
-            <div className="absolute top-10 right-10 opacity-20 group-hover:opacity-40 transition-opacity">
-              <Shield size={64} strokeWidth={1} />
+          <div className="md:col-span-4 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <div className="absolute top-12 right-12 text-zinc-800 group-hover:text-zinc-700 transition-colors">
+              <Shield size={80} strokeWidth={1} />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Secure</h3>
-            <p className="text-sm text-zinc-400">Built-in CSRF, Rate Limiting, and CORS management.</p>
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Secure</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">Built-in rate limiting, automatic cookie parsing, and intelligent CORS management.</p>
           </div>
 
           {/* Medium Feature */}
-          <div className="md:col-span-8 relative group overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/20 p-10 flex flex-col justify-end hover:bg-zinc-900/40 transition-all duration-500">
-            <div className="absolute top-10 right-10 opacity-20 group-hover:opacity-40 transition-opacity">
-              <Database size={80} strokeWidth={1} />
+          <div className="md:col-span-8 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <div className="absolute top-12 right-12 text-zinc-800 group-hover:text-zinc-700 transition-colors">
+              <Database size={140} strokeWidth={1} />
             </div>
-            <h3 className="text-3xl font-bold mb-4">Native Database Connectors</h3>
-            <p className="text-zinc-400 max-w-md leading-relaxed">
-              Zerra ships with high-performance drivers for Postgres, MongoDB, and Supabase. 
-              Auto-injection into your request handlers.
+            <h3 className="text-4xl font-black mb-4 tracking-tight">Zero-Config Middlewares</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-lg leading-relaxed text-lg">
+              Drop a <code className="bg-foreground/10 px-2 py-1 rounded text-sm text-foreground">_middleware.ts</code> file anywhere in your route tree to globally or locally intercept requests, validate schemas, and manipulate responses.
             </p>
           </div>
         </div>
       </section>
 
       {/* Dev Console Spotlight */}
-      <section className="max-w-5xl mx-auto px-4 mb-48">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-900/50 to-transparent p-1 px-1 overflow-hidden">
-          <div className="rounded-[22px] bg-black p-8 md:p-16 text-center border border-white/5 relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">The Dev Console.</h2>
-            <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
+      <section className="max-w-6xl mx-auto px-6 mb-48">
+        <div className="rounded-[48px] border border-border bg-gradient-to-b from-foreground/[0.05] to-transparent p-[2px] overflow-hidden">
+          <div className="rounded-[46px] bg-background p-10 md:p-20 text-center border border-border relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-foreground/30 to-transparent" />
+            
+            <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 bg-gradient-to-br from-foreground to-foreground/50 bg-clip-text text-transparent">
+              The Dev Console.
+            </h2>
+            <p className="text-zinc-500 text-xl mb-14 max-w-3xl mx-auto leading-relaxed">
               Test your routes, monitor performance, and debug your application in real-time. 
-              Built directly into the core runtime. Accessible at <code className="text-white">/__zerra</code>.
+              Built directly into the core runtime. Accessible at <code className="bg-foreground/5 text-foreground px-3 py-1 rounded-md border border-border">/__zerra</code>.
             </p>
-            <div className="aspect-video w-full rounded-2xl bg-zinc-900/50 border border-white/5 shadow-2xl flex items-center justify-center group cursor-pointer hover:bg-zinc-900 transition-colors">
-              <div className="flex flex-col items-center gap-4 text-zinc-600 group-hover:text-zinc-300 transition-colors">
-                <Layout size={48} strokeWidth={1} />
-                <span className="text-sm font-bold tracking-widest uppercase">Click to preview dashboard</span>
+            
+            <div className="relative aspect-video w-full rounded-3xl bg-black border border-border shadow-[0_0_100px_rgba(255,255,255,0.05)] flex items-center justify-center group overflow-hidden">
+              {/* Fake UI Background to look like a console */}
+              <div className="absolute inset-0 opacity-40">
+                <div className="h-12 border-b border-white/10 flex items-center px-6 gap-4">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                </div>
+                <div className="p-6 font-mono text-xs text-left text-zinc-600">
+                   {">"} GET /api/users <br/>
+                   {">"} 200 OK (12ms) <br/><br/>
+                   {">"} POST /api/auth <br/>
+                   {">"} 401 Unauthorized (4ms)
+                </div>
+              </div>
+
+              <div className="relative z-10 w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 group-hover:scale-110 group-hover:bg-white/20 transition-all cursor-pointer shadow-2xl">
+                <Play className="text-white ml-2" size={32} fill="white" />
               </div>
             </div>
           </div>
@@ -121,17 +143,17 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-4 mt-48 pb-16 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 pt-16 text-zinc-500 text-sm">
-        <div className="flex items-center gap-2">
-           <div className="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
-              <span className="text-white font-bold text-xs">Z</span>
+      <footer className="max-w-7xl mx-auto px-6 pb-16 border-t border-border flex flex-col md:flex-row items-center justify-between gap-8 pt-16 text-zinc-500 text-sm">
+        <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-foreground rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+              <span className="text-background font-black text-sm tracking-tighter">Z</span>
             </div>
-            <span className="font-bold text-white tracking-tighter">Zerra</span>
+            <span className="font-bold text-foreground text-lg tracking-tight">Zerra</span>
         </div>
-        <p>© 2026 Zerra Framework. MIT Licensed.</p>
-        <div className="flex items-center gap-8 font-medium">
-           <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
-           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-white transition-colors">GitHub</a>
+        <p className="font-medium text-zinc-600 italic">© 2026 Zerra Framework. MIT Licensed.</p>
+        <div className="flex items-center gap-8 font-semibold">
+           <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
+           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-foreground transition-colors">GitHub</a>
         </div>
       </footer>
     </main>
