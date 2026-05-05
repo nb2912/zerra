@@ -74,10 +74,13 @@ export default function Showcase() {
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 text-sm font-bold text-zinc-500 group-hover:text-foreground transition-colors cursor-pointer">
+                <Link 
+                  href={`/showcase/${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="flex items-center gap-2 text-sm font-bold text-zinc-500 group-hover:text-foreground transition-colors"
+                >
                   View Case Study
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </div>
+                </Link>
               </div>
             </div>
           ))}
@@ -90,6 +93,8 @@ export default function Showcase() {
           <p className="text-zinc-500 dark:text-zinc-400 mb-10 text-lg">We'd love to feature your Zerra project in our showcase.</p>
           <a 
             href="https://github.com/nb2912/zerra/discussions" 
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-foreground text-background px-10 py-4 rounded-full font-bold hover:opacity-90 transition-all hover:scale-105 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
           >
             Submit your Project
