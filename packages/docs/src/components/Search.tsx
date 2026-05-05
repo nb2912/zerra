@@ -57,7 +57,7 @@ export default function Search() {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex-1 max-w-sm bg-foreground/5 border border-border rounded-lg py-1.5 pl-3 pr-2 text-sm text-zinc-500 hover:text-foreground hover:border-foreground/20 transition-all flex items-center justify-between group"
+        className="flex-1 max-w-sm bg-foreground/5 border border-border rounded-lg py-1.5 pl-3 pr-2 text-sm text-zinc-500 hover:text-foreground hover:border-foreground/20 transition-all flex items-center justify-between gap-4 group"
       >
         <div className="flex items-center gap-2">
           <SearchIcon size={14} className="group-hover:text-foreground transition-colors" />
