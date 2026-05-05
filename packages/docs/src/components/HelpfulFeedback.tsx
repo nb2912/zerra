@@ -10,7 +10,7 @@ export default function HelpfulFeedback() {
     return (
       <div className="mt-12 p-6 rounded-xl border border-border bg-foreground/5 animate-in fade-in zoom-in duration-300">
         <p className="text-sm font-medium text-foreground mb-1">Thank you for your feedback!</p>
-        <p className="text-xs text-zinc-500">We'll use this to improve the documentation.</p>
+        <p className="text-xs text-zinc-500">We&apos;ll use this to improve the documentation.</p>
       </div>
     );
   }

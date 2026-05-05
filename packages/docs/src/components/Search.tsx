@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Search as SearchIcon, FileText, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -115,7 +115,7 @@ export default function Search() {
                 </div>
               ) : query !== "" ? (
                 <div className="p-8 text-center text-zinc-500 italic text-sm">
-                  No results found for "{query}"
+                  No results found for &quot;{query}&quot;
                 </div>
               ) : (
                 <div className="p-8 text-center text-zinc-600 text-sm">

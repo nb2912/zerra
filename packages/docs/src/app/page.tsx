@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
-import { Stats, FeatureCard } from "@/components/Marketing";
-import { ArrowRight, Terminal, Zap, Shield, Layout, Cpu, Database, Globe, Play } from "lucide-react";
+import { Stats } from "@/components/Marketing";
+import { ArrowRight, Zap, Shield, Layout, Database } from "lucide-react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
 import DynamicTerminal from "@/components/DynamicTerminal";

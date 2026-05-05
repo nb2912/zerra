@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Globe } from "lucide-react";
 import Search from "./Search";
 
 
