@@ -1,5 +1,6 @@
 import { Terminal, Copy } from "lucide-react";
 import CopyButton from "@/components/CopyButton";
+import Link from "next/link";
 
 export default function GettingStarted() {
   return (
@@ -54,20 +55,26 @@ export default function GettingStarted() {
       </section>
 
       <div id="next-steps" className="grid md:grid-cols-2 gap-6 mt-12">
-        <div className="p-6 rounded-2xl border border-white/5 bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors">
-          <h4 className="font-bold mb-2">Next Steps</h4>
-          <p className="text-sm text-zinc-400">Learn how file-based routing works in Zerra.</p>
-          <div className="mt-4 text-white text-sm font-bold flex items-center gap-1">
+        <Link 
+          href="/docs/routing" 
+          className="p-6 rounded-2xl border border-border bg-foreground/5 hover:bg-foreground/10 transition-all group"
+        >
+          <h4 className="font-bold mb-2 text-foreground">Next Steps</h4>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Learn how file-based routing works in Zerra.</p>
+          <div className="mt-4 text-foreground text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Read Routing Docs →
           </div>
-        </div>
-        <div className="p-6 rounded-2xl border border-white/5 bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors">
-          <h4 className="font-bold mb-2">Database Setup</h4>
-          <p className="text-sm text-zinc-400">Configure PostgreSQL, MongoDB, or Supabase.</p>
-          <div className="mt-4 text-white text-sm font-bold flex items-center gap-1">
+        </Link>
+        <Link 
+          href="/docs/config" 
+          className="p-6 rounded-2xl border border-border bg-foreground/5 hover:bg-foreground/10 transition-all group"
+        >
+          <h4 className="font-bold mb-2 text-foreground">Database Setup</h4>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Configure PostgreSQL, MongoDB, or Supabase.</p>
+          <div className="mt-4 text-foreground text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Connect Database →
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );
