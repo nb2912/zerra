@@ -12,6 +12,10 @@
   "type": "commonjs",
   "dependencies": {
     "busboy": "^1.6.0",
-    "jiti": "^2.6.1"
+    "jiti": "^2.6.1",
+    "node-cron": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11"
   }
 }

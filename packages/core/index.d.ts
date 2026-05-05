@@ -40,6 +40,7 @@ export interface ZerraConfig {
     dashboard?: boolean;
     static?: boolean; // Feature 4: Static File Serving
     rateLimiting?: boolean | { max: number; windowMs: number }; // Feature 5: Built-in Rate Limiting
+    cron?: boolean; // Feature 6: Built-in Cron Job Scheduler
   };
   plugins?: string[];
 }

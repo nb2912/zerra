@@ -54,7 +54,10 @@ program
           { name: "Automatic Input Validation (Schema)", value: "validation", checked: true },
           { name: "Multipart File Uploads (req.files)", value: "multipart", checked: true },
           { name: "Smart Error Handling (_error.js)", value: "errors", checked: true },
-          { name: "Dev Dashboard (/__zerra)", value: "dashboard", checked: true }
+          { name: "Dev Dashboard (/__zerra)", value: "dashboard", checked: true },
+          { name: "Static File Serving (public/)", value: "static", checked: true },
+          { name: "Built-in Rate Limiting", value: "rateLimiting", checked: false },
+          { name: "Cron Job Scheduler (jobs/)", value: "cron", checked: true }
         ]
       },
       {
@@ -224,7 +227,10 @@ program
         validation: answers.features.includes('validation'),
         multipart: answers.features.includes('multipart'),
         errors: answers.features.includes('errors'),
-        dashboard: answers.features.includes('dashboard')
+        dashboard: answers.features.includes('dashboard'),
+        static: answers.features.includes('static'),
+        rateLimiting: answers.features.includes('rateLimiting'),
+        cron: answers.features.includes('cron')
       };
       
       const configJsonPath = path.join(targetPath, 'zerra.config.json');

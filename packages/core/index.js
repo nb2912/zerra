@@ -17,6 +17,7 @@ function startServer(port = 3000) {
       dashboard: true,
       static: true, // Feature 4: Static File Serving
       rateLimiting: false, // Feature 5: Built-in Rate Limiting
+      cron: true, // Feature 6: Built-in Cron Job Scheduler
     },
     plugins: []
   };
@@ -728,6 +729,30 @@ function startServer(port = 3000) {
   server.listen(port, () => {
     console.log(`\n🚀 Zerra Engine started on http://localhost:${port}`);
     console.log(`📁 Mapping routes from: ${apiDir}\n`);
+
+    // Feature 6: Built-in Cron Job Scheduler
+    if (config.features.cron) {
+      try {
+        const nodeCron = require('node-cron');
+        const jobsDir = path.join(process.cwd(), "jobs");
+        if (fs.existsSync(jobsDir)) {
+          const jobFiles = fs.readdirSync(jobsDir).filter(f => f.endsWith('.js') || f.endsWith('.ts'));
+          jobFiles.forEach(file => {
+            const filePath = path.join(jobsDir, file);
+            const job = jiti(filePath);
+            const schedule = job.schedule || (job.default && job.default.schedule);
+            const task = job.task || job.default || (job.default && job.default.task);
+            
+            if (schedule && typeof task === 'function') {
+              nodeCron.schedule(schedule, task);
+              console.log(`⏰ Scheduled job: ${file} [${schedule}]`);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("⚠️ Failed to initialize Cron Jobs. Make sure 'node-cron' is installed.");
+      }
+    }
   });
 }
 
