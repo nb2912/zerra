@@ -141,15 +141,32 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             </article>
 
             {/* Pagination */}
+            {/* Pagination */}
             <div className="mt-20 pt-10 border-t border-border grid grid-cols-2 gap-4">
-              <Link href="/docs" className="group p-4 rounded-xl border border-border hover:bg-foreground/5 transition-all flex flex-col gap-2">
-                <span className="text-xs text-zinc-500 group-hover:text-zinc-400">Previous</span>
-                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-foreground transition-colors">← Introduction</span>
-              </Link>
-              <Link href="/docs/routing" className="group p-4 rounded-xl border border-border hover:bg-foreground/5 transition-all flex flex-col gap-2 items-end">
-                <span className="text-xs text-zinc-500 group-hover:text-zinc-400 text-right">Next</span>
-                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-foreground transition-colors text-right">Routing →</span>
-              </Link>
+              {(() => {
+                const flatNav = DOCS_NAV.flatMap(section => section.items);
+                const currentIndex = flatNav.findIndex(item => item.href === pathname);
+                const prev = currentIndex > 0 ? flatNav[currentIndex - 1] : null;
+                const next = currentIndex < flatNav.length - 1 ? flatNav[currentIndex + 1] : null;
+
+                return (
+                  <>
+                    {prev ? (
+                      <Link href={prev.href} className="group p-4 rounded-xl border border-border hover:bg-foreground/5 transition-all flex flex-col gap-2">
+                        <span className="text-xs text-zinc-500 group-hover:text-zinc-400">Previous</span>
+                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-foreground transition-colors">← {prev.title}</span>
+                      </Link>
+                    ) : <div />}
+                    
+                    {next ? (
+                      <Link href={next.href} className="group p-4 rounded-xl border border-border hover:bg-foreground/5 transition-all flex flex-col gap-2 items-end text-right">
+                        <span className="text-xs text-zinc-500 group-hover:text-zinc-400">Next</span>
+                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-foreground transition-colors">{next.title} →</span>
+                      </Link>
+                    ) : <div />}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </main>
