@@ -3,14 +3,7 @@ import { Stats, FeatureCard } from "@/components/Marketing";
 import { ArrowRight, Terminal, Zap, Shield, Layout, Cpu, Database, Globe, Play } from "lucide-react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
-import dynamic from "next/dynamic";
-
-const DevConsoleTerminal = dynamic(() => import("@/components/DevConsoleTerminal"), {
-  loading: () => (
-    <div className="relative aspect-video w-full rounded-3xl bg-zinc-900 animate-pulse border border-border" />
-  ),
-  ssr: false,
-});
+import DynamicTerminal from "@/components/DynamicTerminal";
 
 export default function Home() {
   return (
@@ -123,7 +116,7 @@ export default function Home() {
               Built directly into the core runtime. Accessible at <code className="bg-foreground/5 text-foreground px-3 py-1 rounded-md border border-border">/__zerra</code>.
             </p>
             
-            <DevConsoleTerminal />
+            <DynamicTerminal />
           </div>
         </div>
       </section>
