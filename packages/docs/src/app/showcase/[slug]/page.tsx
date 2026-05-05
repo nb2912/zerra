@@ -4,8 +4,9 @@ import Link from "next/link";
 import Callout from "@/components/Callout";
 import Steps from "@/components/Steps";
 
-export default function CaseStudy({ params }: { params: { slug: string } }) {
-  const title = params.slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+export default async function CaseStudy({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
   return (
     <main className="min-h-screen pt-32 pb-20 bg-background text-foreground">
