@@ -15,10 +15,10 @@ export default function CopyButton({ text }: { text: string }) {
   return (
     <button 
       onClick={handleCopy}
-      className="text-zinc-500 hover:text-white transition-colors p-1"
+      className="text-zinc-500 hover:text-foreground transition-colors p-1"
       title="Copy to clipboard"
     >
-      {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+      {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
     </button>
   );
 }
