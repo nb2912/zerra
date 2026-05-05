@@ -5,16 +5,16 @@ import { Search as SearchIcon, FileText, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const DOCS_NAV = [
-  { title: "Introduction", href: "/docs" },
-  { title: "Getting Started", href: "/docs/getting-started" },
-  { title: "Project Structure", href: "/docs/structure" },
-  { title: "Routing", href: "/docs/routing" },
-  { title: "Middleware", href: "/docs/middleware" },
-  { title: "Validation", href: "/docs/validation" },
-  { title: "Authentication", href: "/docs/auth" },
-  { title: "CLI API", href: "/docs/cli" },
-  { title: "Zerra Config", href: "/docs/config" },
-  { title: "Plugins", href: "/docs/plugins" },
+  { title: "Introduction", href: "/docs", description: "Learn about Zerra's core philosophy and features." },
+  { title: "Getting Started", href: "/docs/getting-started", description: "Scaffold your first project in seconds." },
+  { title: "Project Structure", href: "/docs/structure", description: "Understand the folder layout of a Zerra app." },
+  { title: "Routing", href: "/docs/routing", description: "Master file-based and dynamic routing." },
+  { title: "Middleware", href: "/docs/middleware", description: "Protect and intercept your API requests." },
+  { title: "Validation", href: "/docs/validation", description: "Automatic schema-based input validation." },
+  { title: "Authentication", href: "/docs/auth", description: "Set up JWT and session-based auth." },
+  { title: "CLI API", href: "/docs/cli", description: "Reference for all create-zerra-app commands." },
+  { title: "Zerra Config", href: "/docs/config", description: "Tweak and tune your runtime engine." },
+  { title: "Plugins", href: "/docs/plugins", description: "Extend Zerra with custom global middleware." },
 ];
 
 export default function Search() {
@@ -57,23 +57,23 @@ export default function Search() {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex-1 max-w-sm bg-zinc-900/50 border border-white/10 rounded-lg py-1.5 pl-3 pr-2 text-sm text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition-all flex items-center justify-between group"
+        className="flex-1 max-w-sm bg-foreground/5 border border-border rounded-lg py-1.5 pl-3 pr-2 text-sm text-zinc-500 hover:text-foreground hover:border-foreground/20 transition-all flex items-center justify-between group"
       >
         <div className="flex items-center gap-2">
-          <SearchIcon size={14} className="group-hover:text-white transition-colors" />
-          <span>Search documentation...</span>
+          <SearchIcon size={14} className="group-hover:text-foreground transition-colors" />
+          <span>Search documentation</span>
         </div>
-        <kbd className="text-[10px] bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded border border-white/5 font-sans">
+        <kbd className="text-[10px] bg-foreground/10 text-zinc-500 px-1.5 py-0.5 rounded border border-border font-sans">
           {os === "mac" ? "⌘K" : "Ctrl K"}
         </kbd>
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
           
-          <div className="relative w-full max-w-xl bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          <div className="relative w-full max-w-xl bg-background border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-border flex items-center gap-3">
               <SearchIcon size={18} className="text-zinc-500" />
               <input 
                 autoFocus
@@ -81,11 +81,11 @@ export default function Search() {
                 placeholder="What are you looking for?"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-zinc-600 text-base"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-zinc-600 text-base"
               />
               <button 
                 onClick={() => setIsOpen(false)}
-                className="text-[10px] bg-zinc-800 text-zinc-500 px-2 py-1 rounded border border-white/5 uppercase font-bold tracking-widest hover:text-white transition-colors"
+                className="text-[10px] bg-foreground/10 text-zinc-500 px-2 py-1 rounded border border-border uppercase font-bold tracking-widest hover:text-foreground transition-colors"
               >
                 Esc
               </button>
@@ -98,18 +98,18 @@ export default function Search() {
                     <button
                       key={item.href}
                       onClick={() => handleSelect(item.href)}
-                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-left transition-colors group"
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-foreground/5 text-left transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-foreground/10 flex items-center justify-center text-zinc-500 group-hover:text-foreground transition-colors">
                           <FileText size={16} />
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-zinc-200 group-hover:text-white">{item.title}</div>
-                          <div className="text-xs text-zinc-500">Documentation</div>
+                          <div className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-foreground">{item.title}</div>
+                          <div className="text-[11px] text-zinc-500 line-clamp-1 group-hover:text-zinc-400 transition-colors">{item.description}</div>
                         </div>
                       </div>
-                      <ChevronRight size={14} className="text-zinc-700 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                      <ChevronRight size={14} className="text-zinc-400 dark:text-zinc-700 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                     </button>
                   ))}
                 </div>
@@ -124,10 +124,10 @@ export default function Search() {
               )}
             </div>
 
-            <div className="p-3 border-t border-white/5 bg-black/20 flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+            <div className="p-3 border-t border-border bg-foreground/5 flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
               <div className="flex gap-4">
-                <span className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-zinc-800 border border-white/5 text-zinc-400">↵</span> Select</span>
-                <span className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-zinc-800 border border-white/5 text-zinc-400">↑↓</span> Navigate</span>
+                <span className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-foreground/10 border border-border text-zinc-400">↵</span> Select</span>
+                <span className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-foreground/10 border border-border text-zinc-400">↑↓</span> Navigate</span>
               </div>
               <div>Search by Zerra</div>
             </div>
