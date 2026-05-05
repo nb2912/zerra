@@ -12,12 +12,15 @@ export interface ZerraRequest extends IncomingMessage {
     buffer: Buffer;
   }>;
   params: Record<string, string>;
+  cookies: Record<string, string>; // Feature 1: Parsed Cookies
 }
 
 export interface ZerraResponse extends ServerResponse {
   status(code: number): ZerraResponse;
   json(data: any): void;
   cors(options?: { origin?: string; methods?: string }): ZerraResponse;
+  sendFile(filePath: string): void; // Feature 2: Send File helper
+  redirect(url: string, status?: number): void; // Feature 3: Redirect helper
 }
 
 export type ZerraHandler = (req: ZerraRequest, res: ZerraResponse) => void | Promise<void>;
@@ -35,6 +38,8 @@ export interface ZerraConfig {
     multipart?: boolean;
     errors?: boolean;
     dashboard?: boolean;
+    static?: boolean; // Feature 4: Static File Serving
+    rateLimiting?: boolean | { max: number; windowMs: number }; // Feature 5: Built-in Rate Limiting
   };
   plugins?: string[];
 }

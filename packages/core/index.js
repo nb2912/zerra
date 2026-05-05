@@ -14,7 +14,9 @@ function startServer(port = 3000) {
       validation: true,
       multipart: true,
       errors: true,
-      dashboard: true
+      dashboard: true,
+      static: true, // Feature 4: Static File Serving
+      rateLimiting: false, // Feature 5: Built-in Rate Limiting
     },
     plugins: []
   };
@@ -129,6 +131,30 @@ function startServer(port = 3000) {
     req.query = Object.fromEntries(parsedUrl.searchParams);
     req.path = parsedUrl.pathname;
 
+    // Feature 1: Auto-parsed Cookies
+    req.cookies = {};
+    if (req.headers.cookie) {
+      req.headers.cookie.split(';').forEach(cookie => {
+        const parts = cookie.split('=');
+        req.cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+      });
+    }
+
+    // Feature 2: res.sendFile helper
+    res.sendFile = (filePath) => {
+       const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+       if (fs.existsSync(absolutePath)) {
+         return fs.createReadStream(absolutePath).pipe(res);
+       }
+       res.status(404).json({ error: "File not found" });
+    };
+
+    // Feature 3: res.redirect helper
+    res.redirect = (redirectUrl, status = 302) => {
+      res.writeHead(status, { Location: redirectUrl });
+      res.end();
+    };
+
     // Apply Decorators
     Object.entries(resDecorators).forEach(([name, fn]) => { res[name] = fn.bind(res); });
     Object.entries(reqDecorators).forEach(([name, fn]) => { req[name] = fn.bind(req); });
@@ -204,6 +230,40 @@ function startServer(port = 3000) {
 
     req.params = {};
     const cleanPath = req.path === "/" ? "/index" : req.path;
+
+    // Feature 4: Built-in Rate Limiting
+    if (config.features.rateLimiting) {
+      if (!global.rateLimitStore) global.rateLimitStore = {};
+      const ip = req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+      
+      const rlConfig = typeof config.features.rateLimiting === 'object' ? config.features.rateLimiting : { max: 100, windowMs: 60000 };
+      
+      if (!global.rateLimitStore[ip] || now > global.rateLimitStore[ip].resetTime) {
+        global.rateLimitStore[ip] = { count: 1, resetTime: now + rlConfig.windowMs };
+      } else {
+        global.rateLimitStore[ip].count++;
+      }
+      
+      if (global.rateLimitStore[ip].count > rlConfig.max) {
+        return res.status(429).json({ error: "Too Many Requests", message: "Rate limit exceeded. Try again later." });
+      }
+    }
+
+    // Feature 5: Static File Serving
+    if (config.features.static && method === 'GET') {
+      const publicDir = path.join(process.cwd(), "public");
+      if (fs.existsSync(publicDir)) {
+        const publicPath = path.join(publicDir, cleanPath === "/index" ? "/" : cleanPath);
+        // Prevent directory traversal
+        if (publicPath.startsWith(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile()) {
+           const ext = path.extname(publicPath);
+           const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
+           res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+           return fs.createReadStream(publicPath).pipe(res);
+        }
+      }
+    }
 
     // 10. Enhanced DX: Dev Dashboard
     if (config.features.dashboard && cleanPath === '/__zerra') {
