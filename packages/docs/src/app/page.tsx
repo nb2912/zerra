@@ -14,10 +14,7 @@ export default function Home() {
       
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-6 text-center mb-40 relative pt-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-border text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-8 hover:bg-foreground/10 transition-colors cursor-pointer">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Zerra v1.0 is now live
-        </div>
+        
 
         <h1 className="text-6xl md:text-[140px] font-black tracking-tighter mb-8 bg-gradient-to-b from-foreground via-foreground/90 to-foreground/40 bg-clip-text text-transparent leading-[0.85]">
           Backend. <br /> Perfected.
@@ -110,32 +107,62 @@ export default function Home() {
           <div className="rounded-[46px] bg-background p-10 md:p-20 text-center border border-border relative">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-foreground/30 to-transparent" />
             
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 bg-gradient-to-br from-foreground to-foreground/50 bg-clip-text text-transparent">
+            <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-8 bg-gradient-to-br from-foreground to-foreground/50 bg-clip-text text-transparent">
               The Dev Console.
             </h2>
-            <p className="text-zinc-500 text-xl mb-14 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-zinc-500 text-lg md:text-xl mb-14 max-w-3xl mx-auto leading-relaxed font-medium">
               Test your routes, monitor performance, and debug your application in real-time. 
               Built directly into the core runtime. Accessible at <code className="bg-foreground/5 text-foreground px-3 py-1 rounded-md border border-border">/__zerra</code>.
             </p>
             
-            <div className="relative aspect-video w-full rounded-3xl bg-black border border-border shadow-[0_0_100px_rgba(255,255,255,0.05)] flex items-center justify-center group overflow-hidden">
-              {/* Fake UI Background to look like a console */}
-              <div className="absolute inset-0 opacity-40">
-                <div className="h-12 border-b border-white/10 flex items-center px-6 gap-4">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+            <div className="relative aspect-video w-full rounded-3xl bg-black border border-border shadow-[0_0_100px_rgba(255,255,255,0.05)] flex flex-col group overflow-hidden text-left">
+               {/* Terminal Header */}
+               <div className="h-12 border-b border-white/10 flex items-center px-6 gap-3 bg-zinc-900/50">
+                  <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                  <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                  <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                  <div className="ml-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                    <Terminal size={12} />
+                    Zerra Engine Console v1.2.1
+                  </div>
                 </div>
-                <div className="p-6 font-mono text-xs text-left text-zinc-600">
-                   {">"} GET /api/users <br/>
-                   {">"} 200 OK (12ms) <br/><br/>
-                   {">"} POST /api/auth <br/>
-                   {">"} 401 Unauthorized (4ms)
-                </div>
-              </div>
 
-              <div className="relative z-10 w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 group-hover:scale-110 group-hover:bg-white/20 transition-all cursor-pointer shadow-2xl">
-                <Play className="text-white ml-2" size={32} fill="white" />
+                <div className="p-8 font-mono text-sm leading-relaxed overflow-hidden">
+                   <div className="flex gap-4 mb-4">
+                      <span className="text-zinc-600">{"["}12:44:01{"]"}</span>
+                      <span className="text-emerald-500 font-bold">🚀 Zerra Engine started on http://localhost:3000</span>
+                   </div>
+                   <div className="flex gap-4 mb-2 opacity-80">
+                      <span className="text-zinc-600">{"["}12:44:05{"]"}</span>
+                      <span className="text-zinc-400">📁 Mapping routes from: /api</span>
+                   </div>
+                   <div className="flex gap-4 mb-2">
+                      <span className="text-zinc-600">{"["}12:44:12{"]"}</span>
+                      <span className="text-zinc-400 italic">⏰ Scheduled job: cleanup.js [0 0 * * *]</span>
+                   </div>
+                   
+                   <div className="mt-8 space-y-2">
+                      <div className="flex gap-4">
+                        <span className="text-zinc-600">{"["}12:45:22{"]"}</span>
+                        <span className="text-white font-bold tracking-tight"><span className="text-emerald-400">[GET]</span> /api/users ➜ <span className="text-emerald-400">200</span> (12ms)</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <span className="text-zinc-600">{"["}12:45:30{"]"}</span>
+                        <span className="text-white font-bold tracking-tight"><span className="text-red-400">[POST]</span> /api/auth ➜ <span className="text-red-400">401</span> (4ms)</span>
+                      </div>
+                   </div>
+
+                   {/* Blinking Cursor */}
+                   <div className="mt-6 flex gap-3 items-center">
+                      <span className="text-zinc-600">{">"}</span>
+                      <div className="w-2 h-5 bg-white/50 animate-pulse" />
+                   </div>
+                </div>
+
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 group-hover:scale-110 group-hover:bg-white/20 transition-all cursor-pointer shadow-2xl opacity-0 group-hover:opacity-100 duration-300">
+                  <Play className="text-white ml-1" size={28} fill="white" />
+                </div>
               </div>
             </div>
           </div>
