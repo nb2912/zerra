@@ -18,7 +18,7 @@ export default function Home() {
         
 
         <h1 className="text-6xl md:text-[140px] font-black tracking-tighter mb-8 bg-gradient-to-b from-foreground via-foreground/90 to-foreground/40 bg-clip-text text-transparent leading-[0.85]">
-          Backend. <br /> Perfected.
+          Backend <br /> Perfected.
         </h1>
         
         <p className="text-xl md:text-2xl text-zinc-500 max-w-3xl mx-auto mb-16 leading-relaxed font-medium">
