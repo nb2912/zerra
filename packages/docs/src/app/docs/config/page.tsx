@@ -1,4 +1,4 @@
-import { Settings, ToggleLeft, Layers } from "lucide-react";
+import { ToggleLeft, Layers } from "lucide-react";
 
 export default function ConfigDocs() {
   return (

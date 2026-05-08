@@ -1,4 +1,4 @@
-import { Terminal, Copy, ArrowRight } from "lucide-react";
+import { Terminal } from "lucide-react";
 import CopyButton from "@/components/CopyButton";
 
 export default function CliDocs() {

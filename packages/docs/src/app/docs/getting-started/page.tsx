@@ -1,4 +1,3 @@
-import { Terminal, Copy } from "lucide-react";
 import CopyButton from "@/components/CopyButton";
 import Link from "next/link";
 

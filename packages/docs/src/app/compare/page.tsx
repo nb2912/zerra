@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import { Check, X, Zap, Shield, Layout, Cpu, Globe, Terminal, ArrowRight } from "lucide-react";
+import { Check, X, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const COMPARISON_DATA = [
@@ -23,7 +23,7 @@ export default function Compare() {
           Zerra vs. <br /> The World.
         </h1>
         <p className="text-xl text-zinc-500 max-w-2xl mx-auto leading-relaxed">
-          How does Zerra stack up against the industry giants? We've compared every major feature to help you decide.
+          How does Zerra stack up against the industry giants? We&apos;ve compared every major feature to help you decide.
         </p>
       </section>
 
@@ -49,7 +49,7 @@ export default function Compare() {
                 </tr>
               </thead>
               <tbody>
-                {COMPARISON_DATA.map((row, i) => (
+                {COMPARISON_DATA.map((row) => (
                   <tr key={row.feature} className="border-b border-border/50 hover:bg-foreground/[0.01] transition-colors">
                     <td className="p-8 font-bold text-zinc-400">{row.feature}</td>
                     <td className="p-8 text-center bg-foreground/[0.02]">
@@ -89,7 +89,7 @@ export default function Compare() {
                <h3 className="text-2xl font-bold">The Zerra Way</h3>
             </div>
             <div className="rounded-3xl border border-border bg-black p-8 font-mono text-sm leading-relaxed shadow-2xl overflow-hidden">
-               <div className="text-zinc-500 mb-4">// api/users/[id].js</div>
+               <div className="text-zinc-500 mb-4">{"// api/users/[id].js"}</div>
                <div className="text-foreground">
                  <span className="text-purple-400">export default async</span> (req, res) ={">"} {"{"} <br />
                  &nbsp;&nbsp;<span className="text-purple-400">const</span> {"{ id }"} = req.params; <br />
@@ -97,7 +97,7 @@ export default function Compare() {
                  {"}"}; <br />
                  <br />
                  <span className="text-purple-400">export const</span> schema = {"{"} <br />
-                 &nbsp;&nbsp;id: <span className="text-emerald-400">'string'</span> <br />
+                 &nbsp;&nbsp;id: <span className="text-emerald-400">&apos;string&apos;</span> <br />
                  {"}"};
                </div>
             </div>
@@ -113,13 +113,13 @@ export default function Compare() {
                <h3 className="text-2xl font-bold text-zinc-400">The Express Way</h3>
             </div>
             <div className="rounded-3xl border border-border bg-black p-8 font-mono text-sm leading-relaxed opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all overflow-hidden">
-               <div className="text-zinc-500 mb-4">// routes/users.js</div>
+               <div className="text-zinc-500 mb-4">{"// routes/users.js"}</div>
                <div className="text-foreground">
-                 <span className="text-purple-400">const</span> express = require(<span className="text-emerald-400">'express'</span>); <br />
+                 <span className="text-purple-400">const</span> express = require(<span className="text-emerald-400">&apos;express&apos;</span>); <br />
                  <span className="text-purple-400">const</span> router = express.Router(); <br />
-                 <span className="text-purple-400">const</span> validate = require(<span className="text-emerald-400">'./middleware/validate'</span>); <br />
+                 <span className="text-purple-400">const</span> validate = require(<span className="text-emerald-400">&apos;./middleware/validate&apos;</span>); <br />
                  <br />
-                 router.get(<span className="text-emerald-400">'/:id'</span>, validate(idSchema), (req, res) ={">"} {"{"} <br />
+                 router.get(<span className="text-emerald-400">&apos;/:id&apos;</span>, validate(idSchema), (req, res) ={">"} {"{"} <br />
                  &nbsp;&nbsp;<span className="text-purple-400">const</span> userId = req.params.id; <br />
                  &nbsp;&nbsp;res.json({"{"} userId {"}"}); <br />
                  {"}"}); <br />

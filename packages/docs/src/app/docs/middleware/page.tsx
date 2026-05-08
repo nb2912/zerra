@@ -1,5 +1,4 @@
-import { Shield, Zap, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { Shield, Zap } from "lucide-react";
 
 export default function MiddlewareDocs() {
   return (
@@ -44,7 +43,7 @@ export default function MiddlewareDocs() {
       <section id="cascading" className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold">Recursive Execution</h2>
         <p className="text-zinc-400">
-          Zerra's middleware system is **top-down and recursive**. If you have a middleware in <code className="text-white">/api/_middleware.js</code> and another in <code className="text-white">/api/users/_middleware.js</code>, both will run in order when accessing a user route.
+          Zerra&apos;s middleware system is **top-down and recursive**. If you have a middleware in <code className="text-white">/api/_middleware.js</code> and another in <code className="text-white">/api/users/_middleware.js</code>, both will run in order when accessing a user route.
         </p>
         
         <div className="p-6 rounded-2xl border border-blue-500/10 bg-blue-500/5 text-sm text-blue-100/70">

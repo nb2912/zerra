@@ -1,10 +1,26 @@
 import Navbar from "@/components/Navbar";
-import { ArrowLeft, Clock, Zap, Shield, Code, Layout, Globe } from "lucide-react";
+import { ArrowLeft, Clock, Zap, Shield, Globe } from "lucide-react";
 import Link from "next/link";
 import Callout from "@/components/Callout";
 import Steps from "@/components/Steps";
 
-const CASE_STUDIES: Record<string, any> = {
+interface CaseStudyData {
+  title: string;
+  duration: string;
+  scale: string;
+  industry: string;
+  security: string;
+  description: string;
+  challenge: string;
+  results: {
+    metric1: string;
+    label1: string;
+    metric2: string;
+    label2: string;
+  };
+}
+
+const CASE_STUDIES: Record<string, CaseStudyData> = {
   "nexflow-api": {
     title: "NexFlow API",
     duration: "4 Months",
@@ -128,7 +144,7 @@ export default async function CaseStudy({ params }: { params: Promise<{ slug: st
 
           <h2>The Solution</h2>
           <p>
-            By leveraging Zerra's high-performance engine and developer-first abstractions, the team successfully migrated their core infrastructure.
+            By leveraging Zerra&apos;s high-performance engine and developer-first abstractions, the team successfully migrated their core infrastructure.
           </p>
 
           <Steps items={[

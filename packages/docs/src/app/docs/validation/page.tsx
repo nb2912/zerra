@@ -90,7 +90,7 @@ export default async function handler(req, res) {
           <h4 className="font-bold">Pro Tip: Auto-Swagger</h4>
         </div>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Zerra uses these schemas to automatically generate your API documentation. You don't have to write a single line of Swagger/OpenAPI code.
+          Zerra uses these schemas to automatically generate your API documentation. You don&apos;t have to write a single line of Swagger/OpenAPI code.
         </p>
       </div>
     </div>

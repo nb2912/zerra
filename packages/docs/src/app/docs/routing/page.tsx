@@ -1,5 +1,4 @@
-import { Terminal } from "lucide-react";
-import CopyButton from "@/components/CopyButton";
+
 
 export default function RoutingDocs() {
   return (

@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
-import { ArrowRight, Zap, Shield, Layout, Globe, Cpu } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 const SHOWCASE_ITEMS = [
   {
@@ -90,7 +89,7 @@ export default function Showcase() {
       <section className="max-w-4xl mx-auto px-6">
         <div className="p-12 rounded-[48px] border border-border bg-gradient-to-b from-foreground/[0.03] to-transparent text-center">
           <h2 className="text-4xl font-bold mb-4 text-foreground">Building something great?</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mb-10 text-lg">We'd love to feature your Zerra project in our showcase.</p>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-10 text-lg">We&apos;d love to feature your Zerra project in our showcase.</p>
           <a 
             href="https://github.com/nb2912/zerra/discussions" 
             target="_blank"

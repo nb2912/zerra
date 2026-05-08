@@ -1,4 +1,4 @@
-import { Lock, Key, ShieldCheck } from "lucide-react";
+import { Key, ShieldCheck } from "lucide-react";
 
 export default function AuthenticationDocs() {
   return (

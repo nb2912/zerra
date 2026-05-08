@@ -16,7 +16,7 @@ export default function PluginsDocs() {
       <section id="structure" className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold">What is a Plugin?</h2>
         <p className="text-zinc-400">
-          A Zerra plugin is a simple JavaScript function that receives the <code className="text-white">zerra</code> instance. You can use this instance to add global middleware or "decorate" the request/response objects.
+          A Zerra plugin is a simple JavaScript function that receives the <code className="text-white">zerra</code> instance. You can use this instance to add global middleware or &quot;decorate&quot; the request/response objects.
         </p>
 
         <div className="bg-zinc-900 rounded-xl border border-white/5 overflow-hidden">
@@ -53,8 +53,8 @@ export default function PluginsDocs() {
             <h4 className="font-bold mb-3 flex items-center gap-2 text-white"><Sparkles size={18} /> zerra.decorate(target, name, fn)</h4>
             <p className="text-sm text-zinc-400 mb-4">Adds custom methods to <code className="text-white">req</code> or <code className="text-white">res</code>.</p>
             <ul className="text-xs text-zinc-500 list-disc pl-4 flex flex-col gap-2">
-              <li><code className="text-zinc-300">target</code>: 'req' or 'res'</li>
-              <li><code className="text-zinc-300">name</code>: The method name (e.g. 'json')</li>
+              <li><code className="text-zinc-300">target</code>: &apos;req&apos; or &apos;res&apos;</li>
+              <li><code className="text-zinc-300">name</code>: The method name (e.g. &apos;json&apos;)</li>
               <li><code className="text-zinc-300">fn</code>: The function implementation</li>
             </ul>
           </div>
