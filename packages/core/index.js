@@ -651,24 +651,56 @@ function startServer(port = 3000) {
             if (typeof handler === "function" || (handler && typeof handler.default === "function")) {
               const actualHandler = handler.default || handler;
               
-              // 9. Enhanced DX: Input Validation
-              const schema = handler.schema;
-              if (config.features.validation && schema) {
-                if (!req.body || typeof req.body !== 'object') {
-                  return res.status(400).json({ 
-                    error: "Validation Failed", 
-                    details: ["Request body is required for this route."] 
-                  });
+              // 9. Enhanced DX: Input Validation (Zod Support)
+              const schemaDef = handler.schema;
+              if (config.features.validation && schemaDef) {
+                let validationErrors = [];
+
+                const validateZod = (zodSchema, data) => {
+                  const result = zodSchema.safeParse(data);
+                  if (!result.success) {
+                    return { error: true, details: result.error.errors };
+                  }
+                  return { error: false, data: result.data };
+                };
+
+                if (schemaDef.safeParse) {
+                  // Direct Zod schema for body
+                  const result = validateZod(schemaDef, req.body);
+                  if (result.error) validationErrors.push(...result.details);
+                  else req.body = result.data;
+                } else if (schemaDef.body || schemaDef.query || schemaDef.params) {
+                  // Advanced schema object: { body: ZodSchema, query: ZodSchema }
+                  if (schemaDef.body && schemaDef.body.safeParse) {
+                    const res = validateZod(schemaDef.body, req.body);
+                    if (res.error) validationErrors.push({ target: 'body', errors: res.details });
+                    else req.body = res.data;
+                  }
+                  if (schemaDef.query && schemaDef.query.safeParse) {
+                    const res = validateZod(schemaDef.query, req.query);
+                    if (res.error) validationErrors.push({ target: 'query', errors: res.details });
+                    else req.query = res.data;
+                  }
+                  if (schemaDef.params && schemaDef.params.safeParse) {
+                    const res = validateZod(schemaDef.params, req.params);
+                    if (res.error) validationErrors.push({ target: 'params', errors: res.details });
+                    else req.params = res.data;
+                  }
+                } else {
+                  // Fallback to legacy basic typeof validation
+                  if (!req.body || typeof req.body !== 'object') {
+                    validationErrors.push("Request body is required for this route.");
+                  } else {
+                    for (const [key, type] of Object.entries(schemaDef)) {
+                       if (typeof req.body[key] !== type) {
+                         validationErrors.push(`Expected '${key}' to be '${type}', got '${typeof req.body[key]}'`);
+                       }
+                    }
+                  }
                 }
 
-                const errors = [];
-                for (const [key, type] of Object.entries(schema)) {
-                   if (typeof req.body[key] !== type) {
-                     errors.push(`Expected '${key}' to be '${type}', got '${typeof req.body[key]}'`);
-                   }
-                }
-                if (errors.length > 0) {
-                  return res.status(400).json({ error: "Validation Failed", details: errors });
+                if (validationErrors.length > 0) {
+                  return res.status(400).json({ error: "Validation Failed", details: validationErrors });
                 }
               }
 

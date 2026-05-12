@@ -7,35 +7,42 @@ export default function ValidationDocs() {
         <div className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Concepts</div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Validation</h1>
         <p className="text-xl text-zinc-400 leading-relaxed">
-          Zerra features a built-in, zero-dependency validation engine. Define your data requirements directly on your route handler.
+          Zerra features first-class integration with <strong>Zod</strong>. Automatically validate and type-cast incoming request bodies, query parameters, and route parameters without writing a single line of boilerplate.
         </p>
       </div>
 
       <div className="h-px bg-white/5 w-full my-4" />
 
       <section id="schema-usage" className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">Defining a Schema</h2>
+        <h2 className="text-2xl font-bold">Validating with Zod</h2>
         <p className="text-zinc-400">
-          To validate incoming request bodies, export a <code className="text-white">schema</code> object alongside your default handler. Zerra will automatically validate the types before your code even runs.
+          To validate incoming requests, simply export a <code className="text-white">schema</code> object containing Zod schemas. Zerra will intercept the request, validate the data, and automatically apply it to <code className="text-white">req.body</code> or <code className="text-white">req.query</code>.
         </p>
 
         <div className="bg-zinc-900 rounded-xl border border-white/5 overflow-hidden">
           <div className="bg-white/5 px-4 py-2 border-b border-white/5 text-xs text-zinc-400 font-mono">
-            api/users/create.js
+            api/users/create.ts
           </div>
           <div className="p-6">
             <pre className="text-sm font-mono text-zinc-300">
-{`export const schema = {
-  name: 'string',
-  age: 'number',
-  isAdmin: 'boolean'
+{`import { z } from 'zod';
+
+export const schema = {
+  body: z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    age: z.number().min(18)
+  }),
+  query: z.object({
+    source: z.string().optional()
+  })
 };
 
 export default async function handler(req, res) {
-  // If we're here, req.body is already validated!
-  const { name, age } = req.body;
+  // If we're here, req.body and req.query are already validated and typed!
+  const { name, email } = req.body;
   
-  res.json({ success: true });
+  res.json({ success: true, user: name });
 }`}
             </pre>
           </div>
@@ -58,29 +65,17 @@ export default async function handler(req, res) {
         </div>
       </section>
 
-      <section id="supported-types" className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">Supported Types</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-sm font-mono">string</span>
-          </div>
-          <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-sm font-mono">number</span>
-          </div>
-          <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-sm font-mono">boolean</span>
-          </div>
-          <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-sm font-mono">object</span>
-          </div>
-          <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-sm font-mono">undefined</span>
-          </div>
+      <section id="legacy-validation" className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">Zero-Dependency Fallback</h2>
+        <p className="text-zinc-400">
+          If you don't want to install Zod, Zerra still supports its ultra-lightweight legacy validation engine. Just provide an object mapping keys to standard JavaScript types.
+        </p>
+        <div className="bg-zinc-900 rounded-xl border border-white/5 p-6 font-mono text-sm text-zinc-300">
+{`export const schema = {
+  name: 'string',
+  age: 'number',
+  isAdmin: 'boolean'
+};`}
         </div>
       </section>
 
