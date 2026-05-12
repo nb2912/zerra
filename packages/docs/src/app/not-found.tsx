@@ -21,7 +21,7 @@ export default function NotFound() {
           Page not found
         </h2>
         <p className="text-zinc-400 mb-10 max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-1000 delay-500 fill-mode-both">
-          The page you are looking for doesn't exist or has been moved to another route.
+          The page you are looking for doesn&apos;t exist or has been moved to another route.
         </p>
         
         <div className="animate-in slide-in-from-bottom-4 fade-in duration-1000 delay-700 fill-mode-both">
