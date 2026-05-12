@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="packages/docs/public/og-image.png" alt="Zerra Banner" width="100%" style="border-radius: 20px" />
-  
+
   # Zerra
   **Backend. Perfected.**
   
