@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export default function ValidationDocs() {
   return (
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       <section id="legacy-validation" className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold">Zero-Dependency Fallback</h2>
         <p className="text-zinc-400">
-          If you don't want to install Zod, Zerra still supports its ultra-lightweight legacy validation engine. Just provide an object mapping keys to standard JavaScript types.
+          If you don&apos;t want to install Zod, Zerra still supports its ultra-lightweight legacy validation engine. Just provide an object mapping keys to standard JavaScript types.
         </p>
         <div className="bg-zinc-900 rounded-xl border border-white/5 p-6 font-mono text-sm text-zinc-300">
 {`export const schema = {
