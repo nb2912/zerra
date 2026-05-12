@@ -3,7 +3,7 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const DOCS_NAV = [
@@ -41,6 +41,12 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [headings, setHeadings] = useState<{ id: string; text: string; level: number }[]>([]);
   const [activeId, setActiveId] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const article = document.querySelector('article');
@@ -86,8 +92,19 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-background selection:bg-foreground/10">
       <Navbar />
       <div className="max-w-[1440px] mx-auto px-6 pt-24 flex gap-12 text-foreground">
+        {/* Mobile Sidebar Overlay */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+        )}
+
         {/* Sidebar */}
-        <aside className="hidden lg:block w-64 h-[calc(100vh-6rem)] overflow-y-auto sticky top-24 pb-12 shrink-0 scrollbar-hide">
+        <aside className={`fixed inset-y-0 left-0 z-[70] w-72 bg-background border-r border-border p-6 transform transition-transform duration-300 lg:relative lg:translate-x-0 lg:border-none lg:p-0 lg:bg-transparent lg:block lg:w-64 lg:h-[calc(100vh-6rem)] lg:sticky lg:top-24 lg:pb-12 lg:shrink-0 overflow-y-auto scrollbar-hide ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="flex items-center justify-between lg:hidden mb-8">
+            <Link href="/" className="font-bold text-[15px] tracking-tight">Zerra</Link>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2 text-zinc-500 hover:text-foreground">
+              <X size={20} />
+            </button>
+          </div>
           <div className="flex flex-col gap-10">
             <Search />
 
@@ -127,14 +144,23 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         {/* Content Area */}
         <main className="flex-1 min-w-0 pb-24">
           <div className="max-w-[800px] mx-auto lg:mx-0">
-            {/* Breadcrumbs */}
-            <nav className="flex items-center gap-2 text-[13px] text-zinc-500 mb-10 font-medium overflow-x-auto whitespace-nowrap scrollbar-hide">
-              <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-              <ChevronRight size={14} className="shrink-0 opacity-40" />
-              <span className="text-zinc-700 dark:text-zinc-200 truncate">
-                {pathname.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Introduction'}
-              </span>
-            </nav>
+            {/* Breadcrumbs & Mobile Menu Toggle */}
+            <div className="flex items-center justify-between mb-10">
+              <nav className="flex items-center gap-2 text-[13px] text-zinc-500 font-medium overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
+                <ChevronRight size={14} className="shrink-0 opacity-40" />
+                <span className="text-zinc-700 dark:text-zinc-200 truncate">
+                  {pathname.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Introduction'}
+                </span>
+              </nav>
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-2 -mr-2 text-zinc-500 hover:text-foreground flex items-center gap-2 text-sm font-medium"
+              >
+                <Menu size={16} />
+                Menu
+              </button>
+            </div>
 
             <article className="prose prose-zinc dark:prose-invert max-w-none prose-pre:bg-foreground/5 prose-pre:border prose-pre:border-border prose-pre:rounded-xl">
               {children}

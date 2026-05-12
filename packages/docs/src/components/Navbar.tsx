@@ -2,9 +2,20 @@
 
 import Link from "next/link";
 import Search from "./Search";
+import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 
 export default function Navbar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="max-w-[1440px] mx-auto px-6 h-14 flex items-center justify-between">
@@ -53,13 +64,38 @@ export default function Navbar() {
             </a>
             <Link 
               href="/docs/getting-started" 
-              className="bg-foreground text-background px-4 py-1.5 rounded-full text-[13px] font-bold hover:opacity-90 transition-all hover:shadow-[0_0_20px_rgba(120,120,120,0.1)]"
+              className="bg-foreground text-background px-4 py-1.5 rounded-full text-[13px] font-bold hover:opacity-90 transition-all hover:shadow-[0_0_20px_rgba(120,120,120,0.1)] hidden sm:block"
             >
               Install
             </Link>
+            
+            {/* Mobile Menu Toggle */}
+            <button 
+              className="md:hidden p-2 -mr-2 text-zinc-500 hover:text-foreground"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed top-14 left-0 right-0 bg-background border-b border-border p-6 flex flex-col gap-6 shadow-2xl z-50 animate-in slide-in-from-top-2">
+          <div className="flex flex-col gap-4 text-sm font-medium">
+            <Link href="/docs" className="text-zinc-400 hover:text-foreground transition-colors p-2 -mx-2 rounded-lg hover:bg-white/5">Docs</Link>
+            <Link href="/showcase" className="text-zinc-400 hover:text-foreground transition-colors p-2 -mx-2 rounded-lg hover:bg-white/5">Showcase</Link>
+            <Link href="/benchmarks" className="text-zinc-400 hover:text-foreground transition-colors p-2 -mx-2 rounded-lg hover:bg-white/5">Benchmarks</Link>
+            <Link href="/compare" className="text-zinc-400 hover:text-foreground transition-colors p-2 -mx-2 rounded-lg hover:bg-white/5">Compare</Link>
+            <Link href="/docs/getting-started" className="text-zinc-400 hover:text-foreground transition-colors p-2 -mx-2 rounded-lg hover:bg-white/5">Install</Link>
+          </div>
+          
+          <div className="sm:hidden pt-4 border-t border-border">
+            <Search />
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
