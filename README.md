@@ -12,6 +12,10 @@
     Zero-config, fully type-safe, and natively powered by a file-based routing engine.
   </p>
 
+  <p align="center">
+    <img src="./zerra_console.png" alt="Zerra Developer Console" width="800" style="border-radius: 12px;" />
+  </p>
+
   [Documentation](https://zerra.dev/docs) • [Showcase](https://zerra.dev/showcase) • [Benchmarks](https://zerra.dev/benchmarks)
 </div>
 
