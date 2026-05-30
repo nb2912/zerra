@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 function startServer(port = 3000) {
+  const isDev = process.env.NODE_ENV !== 'production';
   const jiti = require("jiti")(__filename);
   const configPath = path.join(process.cwd(), 'zerra.config.json');
   let config = {
@@ -29,6 +30,23 @@ function startServer(port = 3000) {
       console.warn("⚠️ Invalid zerra.config.json. Using defaults.");
     }
   }
+
+  // 1. Optimized module caching mechanism
+  const moduleCache = new Map();
+  const getModule = (modulePath) => {
+    if (isDev) {
+      try {
+        delete require.cache[require.resolve(modulePath)];
+      } catch (e) {}
+      return jiti(modulePath);
+    }
+    if (moduleCache.has(modulePath)) {
+      return moduleCache.get(modulePath);
+    }
+    const mod = jiti(modulePath);
+    moduleCache.set(modulePath, mod);
+    return mod;
+  };
 
   const customEnvKeys = new Set();
   const recentRequests = [];
@@ -74,7 +92,7 @@ function startServer(port = 3000) {
   if (config.plugins && Array.isArray(config.plugins)) {
     config.plugins.forEach(pluginPath => {
       try {
-        const plugin = jiti(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
+        const plugin = getModule(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
         if (typeof plugin === 'function') plugin(zerra);
       } catch (e) {
         console.error(`❌ Failed to load plugin: ${pluginPath}`, e);
@@ -83,6 +101,86 @@ function startServer(port = 3000) {
   }
 
   const apiDir = path.join(process.cwd(), "api");
+
+  // In-memory Route Table for fast production route resolution
+  let routeTable = [];
+  
+  function buildRouteTable(dir, base = '') {
+    let results = [];
+    if (!fs.existsSync(dir)) return results;
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      if (stat && stat.isDirectory()) {
+        results = results.concat(buildRouteTable(filePath, path.join(base, file)));
+      } else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) {
+        const relRoute = path.join(base, file).replace(/\\/g, '/').replace(/\.(js|ts)$/, '');
+        const segments = relRoute.split('/').filter(Boolean);
+        
+        // Resolve middleware paths for this route
+        const middlewarePaths = [];
+        if (config.features.middleware) {
+          let currentPath = path.dirname(filePath);
+          while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
+            let mwPath = path.join(currentPath, '_middleware.js');
+            if (!fs.existsSync(mwPath)) mwPath = path.join(currentPath, '_middleware.ts');
+            if (fs.existsSync(mwPath)) {
+              middlewarePaths.unshift(mwPath);
+            }
+            if (currentPath === apiDir) break;
+            currentPath = path.dirname(currentPath);
+          }
+        }
+        
+        results.push({
+          filePath,
+          segments,
+          middlewarePaths
+        });
+      }
+    });
+    return results;
+  }
+
+  if (!isDev) {
+    routeTable = buildRouteTable(apiDir);
+    // Sort exact segments before dynamic parameter segments, and longer paths first
+    routeTable.sort((a, b) => {
+      const minLen = Math.min(a.segments.length, b.segments.length);
+      for (let i = 0; i < minLen; i++) {
+        const aSec = a.segments[i];
+        const bSec = b.segments[i];
+        const aDyn = aSec.startsWith('[');
+        const bDyn = bSec.startsWith('[');
+        if (aDyn !== bDyn) {
+          return aDyn ? 1 : -1;
+        }
+      }
+      return b.segments.length - a.segments.length;
+    });
+  }
+
+  // Pre-cached static files set for production static serving
+  const publicFilesSet = new Set();
+  
+  function scanPublicFiles(dir) {
+    if (!fs.existsSync(dir)) return;
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      if (stat && stat.isDirectory()) {
+        scanPublicFiles(filePath);
+      } else {
+        publicFilesSet.add(filePath);
+      }
+    });
+  }
+
+  if (!isDev && config.features.static) {
+    scanPublicFiles(path.join(process.cwd(), "public"));
+  }
 
   const server = http.createServer(async (req, res) => {
     const { url, method } = req;
@@ -218,9 +316,15 @@ function startServer(port = 3000) {
       });
     };
 
-    const parsedData = await parseBody();
-    req.body = parsedData.body;
-    req.files = parsedData.files;
+    // Conditional body parsed execution (optimization)
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+      req.body = null;
+      req.files = [];
+    } else {
+      const parsedData = await parseBody();
+      req.body = parsedData.body;
+      req.files = parsedData.files;
+    }
 
     // Handle OPTIONS requests automatically for CORS if requested
     if (method === 'OPTIONS') {
@@ -251,18 +355,23 @@ function startServer(port = 3000) {
       }
     }
 
-    // Feature 5: Static File Serving
+    // Feature 5: Static File Serving (optimized via Set lookup in production)
     if (config.features.static && method === 'GET') {
       const publicDir = path.join(process.cwd(), "public");
-      if (fs.existsSync(publicDir)) {
-        const publicPath = path.join(publicDir, cleanPath === "/index" ? "/" : cleanPath);
-        // Prevent directory traversal
-        if (publicPath.startsWith(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile()) {
-           const ext = path.extname(publicPath);
-           const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
-           res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
-           return fs.createReadStream(publicPath).pipe(res);
-        }
+      const publicPath = path.join(publicDir, cleanPath === "/index" ? "/" : cleanPath);
+      
+      let isStaticFile = false;
+      if (!isDev) {
+        isStaticFile = publicFilesSet.has(publicPath);
+      } else {
+        isStaticFile = fs.existsSync(publicDir) && publicPath.startsWith(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile();
+      }
+
+      if (isStaticFile) {
+         const ext = path.extname(publicPath);
+         const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
+         res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+         return fs.createReadStream(publicPath).pipe(res);
       }
     }
 
@@ -284,7 +393,7 @@ function startServer(port = 3000) {
             // Try to extract schema for playground presets
             let schema = null;
             try {
-              const mod = jiti(filePath);
+              const mod = getModule(filePath);
               schema = mod.schema || (mod.default && mod.default.schema);
             } catch (e) {}
 
@@ -432,7 +541,7 @@ function startServer(port = 3000) {
                           <input type="text" id="body-${r.path}" value='${sampleBody}' placeholder='{"key": "value"}' style="flex-grow: 1; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; font-size: 0.8rem;">
                           <button onclick="testRoute('${r.path}')" style="background: var(--primary); color: #fff; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">SEND</button>
                         </div>
-
+ 
                         <div id="res-${r.path}" style="display: none; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 10px; position: relative;">
                           <div id="status-${r.path}" style="position: absolute; top: 8px; right: 8px; font-size: 0.7rem; font-weight: bold;"></div>
                           <pre style="margin: 0;"></pre>
@@ -441,7 +550,7 @@ function startServer(port = 3000) {
                     `}).join('') : '<div style="color:#999">No routes found in /api</div>'}
                   </div>
                 </section>
-
+ 
                 <section>
                   <h2>⚙️ Features</h2>
                   <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -454,7 +563,7 @@ function startServer(port = 3000) {
                   </div>
                 </section>
               </div>
-
+ 
               <section style="margin-bottom: 20px;">
                 <h2>📊 Recent Activity</h2>
                 <table>
@@ -483,7 +592,7 @@ function startServer(port = 3000) {
                   </tbody>
                 </table>
               </section>
-
+ 
               <section>
                 <h2>🔐 Environment</h2>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -501,7 +610,7 @@ function startServer(port = 3000) {
                 </div>
               </section>
             </main>
-
+ 
             <script>
               async function testRoute(path) {
                 const method = document.getElementById('method-' + path).value;
@@ -535,12 +644,12 @@ function startServer(port = 3000) {
                   pre.innerText = err.message;
                 }
               }
-
+ 
               // Soft refresh every 5 seconds
               let refreshTimeout = setTimeout(() => {
                 window.location.reload();
               }, 5000);
-
+ 
               // Pause refresh if user is interacting with playground
               document.addEventListener('mousedown', () => {
                 clearTimeout(refreshTimeout);
@@ -552,75 +661,107 @@ function startServer(port = 3000) {
       `);
     }
 
-    let filePath = path.join(apiDir, `${cleanPath}.js`);
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(apiDir, `${cleanPath}.ts`);
-    }
+    let filePath = null;
+    let middlewarePaths = [];
 
-    // 6. Enhanced DX: Dynamic Routing ([id].js)
-    if (config.features.dynamicRouting && !fs.existsSync(filePath)) {
-      const parts = cleanPath.split('/').filter(Boolean);
-      let currentDir = apiDir;
-      let matchedFile = null;
+    if (!isDev) {
+      // 1. Production Mode: Ultra-fast O(1)/O(N) in-memory route lookup
+      const reqSegments = cleanPath.split('/').filter(Boolean);
+      for (const route of routeTable) {
+        if (route.segments.length !== reqSegments.length) continue;
 
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        const isLast = i === parts.length - 1;
-        
-        if (fs.existsSync(currentDir)) {
-          const files = fs.readdirSync(currentDir);
-          
-          // Look for exact match first
-          let match = files.find(f => isLast ? f === `${part}.js` : f === part && fs.statSync(path.join(currentDir, f)).isDirectory());
-          
-          // Look for dynamic parameter [param]
-          if (!match) {
-            match = files.find(f => isLast ? (f.startsWith('[') && (f.endsWith('].js') || f.endsWith('].ts'))) : (f.startsWith('[') && f.endsWith(']') && fs.statSync(path.join(currentDir, f)).isDirectory()));
-            if (match) {
-              const paramName = isLast ? match.slice(1, match.lastIndexOf('].')) : match.slice(1, -1);
-              req.params[paramName] = part;
-            }
+        let isMatch = true;
+        const tempParams = {};
+
+        for (let i = 0; i < route.segments.length; i++) {
+          const routeSec = route.segments[i];
+          const reqSec = reqSegments[i];
+
+          if (routeSec.startsWith('[') && routeSec.endsWith(']')) {
+            const paramName = routeSec.slice(1, -1);
+            tempParams[paramName] = reqSec;
+          } else if (routeSec !== reqSec) {
+            isMatch = false;
+            break;
           }
+        }
 
-          if (match) {
-            if (isLast) {
-              matchedFile = path.join(currentDir, match);
+        if (isMatch) {
+          filePath = route.filePath;
+          req.params = tempParams;
+          middlewarePaths = route.middlewarePaths;
+          break;
+        }
+      }
+    } else {
+      // 2. Development Mode: Dynamic Filesystem Walk for instant hot-reloading
+      filePath = path.join(apiDir, `${cleanPath}.js`);
+      if (!fs.existsSync(filePath)) {
+        filePath = path.join(apiDir, `${cleanPath}.ts`);
+      }
+
+      if (config.features.dynamicRouting && !fs.existsSync(filePath)) {
+        const parts = cleanPath.split('/').filter(Boolean);
+        let currentDir = apiDir;
+        let matchedFile = null;
+
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          const isLast = i === parts.length - 1;
+          
+          if (fs.existsSync(currentDir)) {
+            const files = fs.readdirSync(currentDir);
+            
+            // Look for exact match first
+            let match = files.find(f => isLast ? f === `${part}.js` : f === part && fs.statSync(path.join(currentDir, f)).isDirectory());
+            
+            // Look for dynamic parameter [param]
+            if (!match) {
+              match = files.find(f => isLast ? (f.startsWith('[') && (f.endsWith('].js') || f.endsWith('].ts'))) : (f.startsWith('[') && f.endsWith(']') && fs.statSync(path.join(currentDir, f)).isDirectory()));
+              if (match) {
+                const paramName = isLast ? match.slice(1, match.lastIndexOf('].')) : match.slice(1, -1);
+                req.params[paramName] = part;
+              }
+            }
+
+            if (match) {
+              if (isLast) {
+                matchedFile = path.join(currentDir, match);
+              } else {
+                currentDir = path.join(currentDir, match);
+              }
             } else {
-              currentDir = path.join(currentDir, match);
+              break;
             }
           } else {
             break;
           }
-        } else {
-          break;
+        }
+        
+        if (matchedFile) {
+          filePath = matchedFile;
         }
       }
-      
-      if (matchedFile) {
-        filePath = matchedFile;
+
+      // Populate middleware chain for dev mode dynamically
+      if (filePath && fs.existsSync(filePath) && config.features.middleware) {
+        const targetDir = path.dirname(filePath);
+        let currentPath = targetDir;
+        while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
+          let mwPath = path.join(currentPath, '_middleware.js');
+          if (!fs.existsSync(mwPath)) mwPath = path.join(currentPath, '_middleware.ts');
+          
+          if (fs.existsSync(mwPath)) {
+            middlewarePaths.unshift(mwPath);
+          }
+          if (currentPath === apiDir) break;
+          currentPath = path.dirname(currentPath);
+        }
       }
     }
 
-    if (fs.existsSync(filePath)) {
+    if (filePath && fs.existsSync(filePath)) {
       try {
-        // 7. Enhanced DX: Middleware (_middleware.js)
-        const targetDir = path.dirname(filePath);
-        let currentPath = targetDir;
-        const middlewarePaths = [];
-        
-        if (config.features.middleware) {
-          while (currentPath.length >= apiDir.length && currentPath.startsWith(apiDir)) {
-            let mwPath = path.join(currentPath, '_middleware.js');
-            if (!fs.existsSync(mwPath)) mwPath = path.join(currentPath, '_middleware.ts');
-            
-            if (fs.existsSync(mwPath)) {
-              middlewarePaths.unshift(mwPath); // Run top-down
-            }
-            if (currentPath === apiDir) break;
-            currentPath = path.dirname(currentPath);
-          }
-        }
-
         let middlewareIndex = 0;
         let responseSent = false;
         
@@ -636,8 +777,7 @@ function startServer(port = 3000) {
 
           if (middlewareIndex < middlewarePaths.length) {
             const mwPath = middlewarePaths[middlewareIndex++];
-            delete require.cache[require.resolve(mwPath)];
-            const mw = jiti(mwPath);
+            const mw = getModule(mwPath);
             if (typeof mw === 'function' || (mw && typeof mw.default === 'function')) {
                const actualMw = mw.default || mw;
                await actualMw(req, res, runNext);
@@ -645,8 +785,7 @@ function startServer(port = 3000) {
                await runNext();
             }
           } else {
-            delete require.cache[require.resolve(filePath)];
-            const handler = jiti(filePath);
+            const handler = getModule(filePath);
 
             if (typeof handler === "function" || (handler && typeof handler.default === "function")) {
               const actualHandler = handler.default || handler;
@@ -729,8 +868,7 @@ function startServer(port = 3000) {
           const errorHandlerPath = path.join(apiDir, '_error.js');
           if (fs.existsSync(errorHandlerPath)) {
             try {
-              delete require.cache[require.resolve(errorHandlerPath)];
-              const errorHandler = jiti(errorHandlerPath);
+              const errorHandler = getModule(errorHandlerPath);
               const actualErrorHandler = errorHandler.default || errorHandler;
               if (typeof actualErrorHandler === 'function') {
                 return await actualErrorHandler(err, req, res);
@@ -771,7 +909,7 @@ function startServer(port = 3000) {
           const jobFiles = fs.readdirSync(jobsDir).filter(f => f.endsWith('.js') || f.endsWith('.ts'));
           jobFiles.forEach(file => {
             const filePath = path.join(jobsDir, file);
-            const job = jiti(filePath);
+            const job = getModule(filePath);
             const schedule = job.schedule || (job.default && job.default.schedule);
             const task = job.task || job.default || (job.default && job.default.task);
             
