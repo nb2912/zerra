@@ -15,12 +15,6 @@ export default function AnimatedBackground() {
     let particles: { x: number; y: number; size: number; speedY: number; opacity: number; pulseSpeed: number; pulseState: number }[] = [];
     let animationFrameId: number;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
-    };
-
     const initParticles = () => {
       particles = [];
       const numParticles = Math.floor((canvas.width * canvas.height) / 6000); 
@@ -29,11 +23,52 @@ export default function AnimatedBackground() {
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           size: Math.random() * 1.8 + 0.4,
-          speedY: Math.random() * 0.8 + 0.4, // faster speed
-          opacity: Math.random() * 0.2 + 0.1, // dimmer white
+          speedY: Math.random() * 0.8 + 0.4,
+          opacity: Math.random() * 0.2 + 0.1,
           pulseSpeed: Math.random() * 0.02 + 0.005,
           pulseState: Math.random() * Math.PI * 2,
         });
+      }
+    };
+
+    const resize = () => {
+      const oldWidth = canvas.width;
+      const oldHeight = canvas.height;
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      if (oldWidth === 0 || oldHeight === 0) {
+        initParticles();
+        return;
+      }
+
+      // Smoothly scale existing particles' positions instead of resetting them
+      const targetNum = Math.floor((newWidth * newHeight) / 6000);
+      
+      particles.forEach((p) => {
+        p.x = (p.x / oldWidth) * newWidth;
+        p.y = (p.y / oldHeight) * newHeight;
+      });
+
+      // Adjust particle count smoothly without wiping the list
+      if (particles.length < targetNum) {
+        const diff = targetNum - particles.length;
+        for (let i = 0; i < diff; i++) {
+          particles.push({
+            x: Math.random() * newWidth,
+            y: Math.random() * newHeight,
+            size: Math.random() * 1.8 + 0.4,
+            speedY: Math.random() * 0.8 + 0.4,
+            opacity: Math.random() * 0.2 + 0.1,
+            pulseSpeed: Math.random() * 0.02 + 0.005,
+            pulseState: Math.random() * Math.PI * 2,
+          });
+        }
+      } else if (particles.length > targetNum) {
+        particles.splice(targetNum);
       }
     };
 
@@ -42,7 +77,6 @@ export default function AnimatedBackground() {
       ctx.fillStyle = "#ffffff";
 
       particles.forEach((p) => {
-        // Calculate pulsing opacity
         p.pulseState += p.pulseSpeed;
         const currentOpacity = p.opacity + Math.sin(p.pulseState) * 0.4;
         
@@ -51,10 +85,8 @@ export default function AnimatedBackground() {
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Move upwards slowly
         p.y -= p.speedY;
 
-        // Reset to bottom if it goes off screen
         if (p.y < -10) {
           p.y = canvas.height + 10;
           p.x = Math.random() * canvas.width;
@@ -64,12 +96,26 @@ export default function AnimatedBackground() {
       animationFrameId = requestAnimationFrame(draw);
     };
 
-    window.addEventListener("resize", resize);
-    resize();
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        resize();
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+    
+    // Initial size setup
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initParticles();
+    
     draw();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
