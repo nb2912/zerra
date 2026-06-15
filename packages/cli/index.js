@@ -8,7 +8,44 @@ const inquirer = require("inquirer");
 const program = new Command();
 
 program
-  .argument("<project-name>")
+  .command("generate <type> <name>")
+  .description("Scaffold a new route, middleware, or job")
+  .action((type, name) => {
+    const isTs = fs.existsSync(path.join(process.cwd(), "tsconfig.json"));
+    const ext = isTs ? "ts" : "js";
+    let targetPath = "";
+    let template = "";
+
+    if (type === "route") {
+      targetPath = path.join(process.cwd(), "api", `${name}.${ext}`);
+      template = isTs 
+        ? `export const GET = async (req: any, res: any) => {\n  res.json({ message: "Hello from ${name}" });\n};\n`
+        : `export const GET = async (req, res) => {\n  res.json({ message: "Hello from ${name}" });\n};\n`;
+    } else if (type === "middleware") {
+      targetPath = path.join(process.cwd(), "api", name, `_middleware.${ext}`);
+      template = isTs
+        ? `export default async (req: any, res: any, next: Function) => {\n  // Middleware logic\n  await next();\n};\n`
+        : `export default async (req, res, next) => {\n  // Middleware logic\n  await next();\n};\n`;
+    } else if (type === "job") {
+      targetPath = path.join(process.cwd(), "jobs", `${name}.${ext}`);
+      template = `export const schedule = "0 0 * * *"; // Midnight every day\nexport const task = async () => {\n  console.log("Job ${name} running...");\n};\n`;
+    } else {
+      console.error(`❌ Unknown type '${type}'. Use 'route', 'middleware', or 'job'.`);
+      return;
+    }
+
+    fs.ensureDirSync(path.dirname(targetPath));
+    if (fs.existsSync(targetPath)) {
+      console.error(`❌ File already exists at ${targetPath}`);
+      return;
+    }
+    fs.writeFileSync(targetPath, template);
+    console.log(`✅ Generated ${type} at ${targetPath}`);
+  });
+
+program
+  .command("create <project-name>", { isDefault: true })
+  .description("Create a new Zerra project")
   .action(async (projectName) => {
     const targetPath = path.join(process.cwd(), projectName);
 

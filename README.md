@@ -88,6 +88,23 @@ export default async (req, res, next) => {
 };
 ```
 
+### 4. HTTP Method Exports & WebSockets
+Define methods explicitly for cleaner code, or use `_ws.js` for instant WebSocket support.
+
+```javascript
+export const GET = (req, res) => res.json({ message: "Hello!" });
+export const POST = (req, res) => res.json({ body: req.body });
+```
+
+### 5. The CLI Toolkit
+Scaffold files effortlessly directly from the terminal without breaking your flow:
+
+```bash
+npx create-zerra-app generate route users/[id]
+npx create-zerra-app generate middleware auth
+npx create-zerra-app generate job cleanup
+```
+
 ---
 
 ## 📊 Benchmarks

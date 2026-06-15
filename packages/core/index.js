@@ -19,13 +19,20 @@ function startServer(port = 3000) {
       static: true, // Feature 4: Static File Serving
       rateLimiting: false, // Feature 5: Built-in Rate Limiting
       cron: true, // Feature 6: Built-in Cron Job Scheduler
+      securityHeaders: true, // Feature: Security Headers
+      cors: false, // Feature: Global CORS
+      requestTracing: true, // Feature: Request Tracing
     },
+    cors: { origin: '*', methods: 'GET,POST,PUT,DELETE,OPTIONS' },
+    routePrefix: '',
     plugins: []
   };
   if (fs.existsSync(configPath)) {
     try {
       const userConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       config.features = { ...config.features, ...(userConfig.features || {}) };
+      if (userConfig.cors) config.cors = { ...config.cors, ...userConfig.cors };
+      if (userConfig.routePrefix !== undefined) config.routePrefix = userConfig.routePrefix;
     } catch (e) {
       console.warn("⚠️ Invalid zerra.config.json. Using defaults.");
     }
@@ -186,6 +193,31 @@ function startServer(port = 3000) {
     const { url, method } = req;
     const startTime = Date.now();
 
+    // Feature: Request Tracing
+    if (config.features.requestTracing) {
+      req.id = req.headers['x-request-id'] || require('crypto').randomUUID();
+      res.setHeader('X-Request-Id', req.id);
+    }
+
+    // Feature: Security Headers
+    if (config.features.securityHeaders) {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('X-XSS-Protection', '1; mode=block');
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+
+    // Feature: Global CORS
+    if (config.features.cors && config.cors) {
+      res.setHeader('Access-Control-Allow-Origin', config.cors.origin);
+      res.setHeader('Access-Control-Allow-Methods', config.cors.methods);
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+      if (method === 'OPTIONS') {
+        res.statusCode = 204;
+        return res.end();
+      }
+    }
+
     // 1. Enhanced DX: Beautiful Request Logging
     const originalEnd = res.end;
     res.end = function (...args) {
@@ -223,6 +255,12 @@ function startServer(port = 3000) {
     res.json = (data) => {
       res.setHeader("Content-Type", "application/json");
       res.end(JSON.stringify(data));
+    };
+
+    // Feature: Response Caching
+    res.cache = (ttlSeconds) => {
+      res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}`);
+      return res;
     };
 
     // 2. Enhanced DX: Parse query parameters
@@ -334,7 +372,11 @@ function startServer(port = 3000) {
     }
 
     req.params = {};
-    const cleanPath = req.path === "/" ? "/index" : req.path;
+    let rawPath = req.path;
+    if (config.routePrefix && rawPath.startsWith(config.routePrefix)) {
+      rawPath = rawPath.slice(config.routePrefix.length);
+    }
+    const cleanPath = (rawPath === "/" || rawPath === "") ? "/index" : rawPath;
 
     // Feature 4: Built-in Rate Limiting
     if (config.features.rateLimiting) {
@@ -786,9 +828,16 @@ function startServer(port = 3000) {
             }
           } else {
             const handler = getModule(filePath);
+            
+            // Feature: HTTP Method Exports
+            let actualHandler = null;
+            if (handler && typeof handler[method] === "function") {
+              actualHandler = handler[method];
+            } else if (typeof handler === "function" || (handler && typeof handler.default === "function")) {
+              actualHandler = handler.default || handler;
+            }
 
-            if (typeof handler === "function" || (handler && typeof handler.default === "function")) {
-              const actualHandler = handler.default || handler;
+            if (actualHandler) {
               
               // 9. Enhanced DX: Input Validation (Zod Support)
               const schemaDef = handler.schema;
@@ -845,7 +894,11 @@ function startServer(port = 3000) {
 
               await actualHandler(req, res);
             } else {
-              res.status(500).json({ error: `Handler in ${filePath} must be a function.` });
+              if (handler && typeof handler === "object" && !handler.default) {
+                res.status(405).json({ error: `Method ${method} Not Allowed on this route.` });
+              } else {
+                res.status(500).json({ error: `Handler in ${filePath} must be a function or export HTTP methods.` });
+              }
             }
           }
         };
@@ -893,6 +946,35 @@ function startServer(port = 3000) {
       }
     } else {
       res.status(404).json({ error: "Not Found", route: url });
+    }
+  });
+
+  // Feature: WebSocket Support
+  server.on('upgrade', (req, socket, head) => {
+    let rawPath = req.url.split('?')[0];
+    if (config.routePrefix && rawPath.startsWith(config.routePrefix)) {
+      rawPath = rawPath.slice(config.routePrefix.length);
+    }
+    const cleanPath = (rawPath === "/" || rawPath === "") ? "/index" : rawPath;
+    
+    const wsPathJs = path.join(apiDir, `${cleanPath}/_ws.js`);
+    const wsPathTs = path.join(apiDir, `${cleanPath}/_ws.ts`);
+    const filePath = fs.existsSync(wsPathJs) ? wsPathJs : (fs.existsSync(wsPathTs) ? wsPathTs : null);
+
+    if (filePath) {
+      try {
+        const wsModule = getModule(filePath);
+        const handleUpgrade = wsModule.handleUpgrade || (wsModule.default && wsModule.default.handleUpgrade);
+        if (typeof handleUpgrade === 'function') {
+          handleUpgrade(req, socket, head);
+        } else {
+          socket.destroy();
+        }
+      } catch (e) {
+        socket.destroy();
+      }
+    } else {
+      socket.destroy();
     }
   });
 

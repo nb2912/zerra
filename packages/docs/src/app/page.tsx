@@ -98,8 +98,8 @@ export default function Home() {
             <div className="absolute top-8 right-8 md:top-12 md:right-12 text-zinc-800 group-hover:text-zinc-700 transition-colors">
               <Shield size={64} className="md:w-20 md:h-20" strokeWidth={1} />
             </div>
-            <h3 className="text-3xl font-black mb-3 tracking-tight">Secure</h3>
-            <p className="text-zinc-500 dark:text-zinc-400">Built-in rate limiting, automatic cookie parsing, and intelligent CORS management.</p>
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Secure & Scalable</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">Built-in rate limiting, intelligent Global CORS, Helmet-style Security Headers, and auto-cookie parsing.</p>
           </div>
 
           {/* Medium Feature */}
@@ -113,6 +113,22 @@ export default function Home() {
                 Drop a <code className="bg-foreground/10 px-2 py-1 rounded text-sm text-foreground">_middleware.ts</code> file anywhere in your route tree to globally or locally intercept requests, validate schemas, and manipulate responses.
               </p>
             </div>
+          </div>
+          
+          {/* New CLI Feature */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Generate Code Instantly</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Never write boilerplate again. Use the <code className="bg-foreground/10 px-2 py-1 rounded">zerra generate</code> CLI command to instantly scaffold routes, middlewares, and cron jobs.
+            </p>
+          </div>
+
+          {/* New WebSocket Feature */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Native WebSockets</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Real-time comes standard. Just drop a <code className="bg-foreground/10 px-2 py-1 rounded">_ws.js</code> file anywhere in your route tree to effortlessly establish persistent WebSocket connections.
+            </p>
           </div>
         </div>
       </section>
