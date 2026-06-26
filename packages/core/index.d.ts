@@ -52,3 +52,14 @@ export interface ZerraApp {
 }
 
 export function startServer(port?: number): void;
+
+export class ZerraError extends Error {
+  status: number;
+  constructor(status: number, message: string);
+  static BadRequest(message?: string): ZerraError;
+  static Unauthorized(message?: string): ZerraError;
+  static Forbidden(message?: string): ZerraError;
+  static NotFound(message?: string): ZerraError;
+  static Conflict(message?: string): ZerraError;
+  static Internal(message?: string): ZerraError;
+}

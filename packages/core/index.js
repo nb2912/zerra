@@ -703,6 +703,122 @@ function startServer(port = 3000) {
       `);
     }
 
+    // 11. Enhanced DX: Auto-Generated API Docs (Swagger UI)
+    if (config.features.dashboard && cleanPath === '/__zerra/docs') {
+      const getRoutes = (dir, base = '') => {
+        let results = [];
+        if (!fs.existsSync(dir)) return results;
+        const list = fs.readdirSync(dir);
+        list.forEach(file => {
+          const filePath = path.join(dir, file);
+          const stat = fs.statSync(filePath);
+          if (stat && stat.isDirectory()) {
+            results = results.concat(getRoutes(filePath, path.join(base, file)));
+          } else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) {
+            const route = path.join(base, file).replace(/\\/g, '/').replace(/\.(js|ts)$/, '');
+            const fullPath = `/${route === 'index' ? '' : route}`;
+            
+            let schema = null;
+            let methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']; // default
+            try {
+              const mod = getModule(filePath);
+              schema = mod.schema || (mod.default && mod.default.schema);
+              const exportedMethods = Object.keys(mod).filter(k => ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].includes(k));
+              if (exportedMethods.length > 0) methods = exportedMethods;
+            } catch (e) {}
+
+            results.push({ path: fullPath, schema, methods });
+          }
+        });
+        return results;
+      };
+
+      const routes = getRoutes(apiDir);
+      
+      const openapi = {
+        openapi: "3.0.0",
+        info: { title: "Zerra API", version: "1.0.0" },
+        paths: {}
+      };
+
+      routes.forEach(r => {
+        const swaggerPath = r.path.replace(/\[([^\]]+)\]/g, '{$1}');
+        if (!openapi.paths[swaggerPath]) openapi.paths[swaggerPath] = {};
+        
+        const pathParams = [];
+        const paramMatches = r.path.match(/\[([^\]]+)\]/g);
+        if (paramMatches) {
+          paramMatches.forEach(match => {
+            const paramName = match.slice(1, -1);
+            pathParams.push({
+              name: paramName,
+              in: "path",
+              required: true,
+              schema: { type: "string" }
+            });
+          });
+        }
+
+        r.methods.forEach(method => {
+          const lowerMethod = method.toLowerCase();
+          openapi.paths[swaggerPath][lowerMethod] = {
+            summary: `${method} ${r.path}`,
+            responses: {
+              "200": { description: "Successful response" },
+              "400": { description: "Validation Error" }
+            }
+          };
+
+          if (pathParams.length > 0) {
+            openapi.paths[swaggerPath][lowerMethod].parameters = pathParams;
+          }
+
+          if (r.schema && ['post', 'put', 'patch'].includes(lowerMethod)) {
+            const properties = {};
+            Object.entries(r.schema).forEach(([k, v]) => {
+               if (typeof v === 'string') properties[k] = { type: v === 'number' ? 'number' : v === 'boolean' ? 'boolean' : 'string' };
+               else properties[k] = { type: 'string' };
+            });
+
+            openapi.paths[swaggerPath][lowerMethod].requestBody = {
+              content: {
+                "application/json": {
+                  schema: { type: "object", properties }
+                }
+              }
+            };
+          }
+        });
+      });
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.end(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Zerra API Documentation</title>
+          <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+        </head>
+        <body>
+          <div id="swagger-ui"></div>
+          <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+          <script>
+            window.onload = function() {
+              window.ui = SwaggerUIBundle({
+                spec: ${JSON.stringify(openapi)},
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+                layout: "BaseLayout"
+              });
+            };
+          </script>
+        </body>
+        </html>
+      `);
+    }
+
     let filePath = null;
     let middlewarePaths = [];
 
@@ -1008,4 +1124,18 @@ function startServer(port = 3000) {
   });
 }
 
-module.exports = { startServer };
+class ZerraError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+    this.name = this.constructor.name;
+  }
+  static BadRequest(message = "Bad Request") { return new ZerraError(400, message); }
+  static Unauthorized(message = "Unauthorized") { return new ZerraError(401, message); }
+  static Forbidden(message = "Forbidden") { return new ZerraError(403, message); }
+  static NotFound(message = "Not Found") { return new ZerraError(404, message); }
+  static Conflict(message = "Conflict") { return new ZerraError(409, message); }
+  static Internal(message = "Internal Server Error") { return new ZerraError(500, message); }
+}
+
+module.exports = { startServer, ZerraError };
