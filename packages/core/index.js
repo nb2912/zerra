@@ -22,6 +22,8 @@ function startServer(port = 3000) {
       securityHeaders: true, // Feature: Security Headers
       cors: false, // Feature: Global CORS
       requestTracing: true, // Feature: Request Tracing
+      guards: true, // Feature: Declarative Route Guards (_guard.js)
+      transforms: true, // Feature: Response Transformers (_transform.js)
     },
     cors: { origin: '*', methods: 'GET,POST,PUT,DELETE,OPTIONS' },
     routePrefix: '',
@@ -819,6 +821,55 @@ function startServer(port = 3000) {
       `);
     }
 
+    // 12. Enhanced DX: Health Check Endpoint
+    if (config.features.dashboard && cleanPath === '/__zerra/health') {
+      const memUsage = process.memoryUsage();
+      const formatBytes = (bytes) => {
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+      };
+      const uptimeSeconds = process.uptime();
+      const hours = Math.floor(uptimeSeconds / 3600);
+      const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+      const seconds = Math.floor(uptimeSeconds % 60);
+      const uptimeStr = hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+
+      // Count routes
+      const countRoutes = (dir) => {
+        let count = 0;
+        if (!fs.existsSync(dir)) return count;
+        const list = fs.readdirSync(dir);
+        list.forEach(file => {
+          const fp = path.join(dir, file);
+          const stat = fs.statSync(fp);
+          if (stat && stat.isDirectory()) count += countRoutes(fp);
+          else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) count++;
+        });
+        return count;
+      };
+
+      // Calculate avg response time from recent requests
+      const avgResponseTime = recentRequests.length > 0
+        ? (recentRequests.reduce((sum, r) => sum + r.duration, 0) / recentRequests.length).toFixed(1)
+        : '0';
+
+      return res.json({
+        status: 'healthy',
+        uptime: uptimeStr,
+        memory: {
+          rss: formatBytes(memUsage.rss),
+          heapUsed: formatBytes(memUsage.heapUsed),
+          heapTotal: formatBytes(memUsage.heapTotal)
+        },
+        routes: countRoutes(apiDir),
+        avgResponseTime: avgResponseTime + 'ms',
+        totalRequests: recentRequests.length,
+        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: process.version,
+        framework: 'Zerra'
+      });
+    }
+
     let filePath = null;
     let middlewarePaths = [];
 
@@ -856,6 +907,13 @@ function startServer(port = 3000) {
       filePath = path.join(apiDir, `${cleanPath}.js`);
       if (!fs.existsSync(filePath)) {
         filePath = path.join(apiDir, `${cleanPath}.ts`);
+      }
+      // Fallback: check for index file inside directory (e.g., /users -> /users/index.js)
+      if (!fs.existsSync(filePath)) {
+        const indexPathJs = path.join(apiDir, cleanPath, 'index.js');
+        const indexPathTs = path.join(apiDir, cleanPath, 'index.ts');
+        if (fs.existsSync(indexPathJs)) filePath = indexPathJs;
+        else if (fs.existsSync(indexPathTs)) filePath = indexPathTs;
       }
 
       if (config.features.dynamicRouting && !fs.existsSync(filePath)) {
@@ -943,6 +1001,64 @@ function startServer(port = 3000) {
                await runNext();
             }
           } else {
+            // Feature: Declarative Route Guards (_guard.js)
+            if (config.features.guards) {
+              const guardDir = path.dirname(filePath);
+              let guardPath = path.join(guardDir, '_guard.js');
+              if (!fs.existsSync(guardPath)) guardPath = path.join(guardDir, '_guard.ts');
+              
+              if (fs.existsSync(guardPath)) {
+                try {
+                  const guardModule = getModule(guardPath);
+                  const guard = guardModule.default || guardModule;
+                  
+                  if (typeof guard === 'object' && guard !== null) {
+                    // Check 'require' field: if "auth", req.user must exist
+                    if (guard.require === 'auth' && !req.user) {
+                      return res.status(401).json({ 
+                        error: 'Unauthorized', 
+                        message: guard.message || 'Authentication is required to access this route.' 
+                      });
+                    }
+
+                    // Check 'roles' field: req.user.role must be in the array
+                    if (guard.roles && Array.isArray(guard.roles)) {
+                      const userRole = req.user && (req.user.role || req.user.type);
+                      if (!userRole || !guard.roles.includes(userRole)) {
+                        return res.status(403).json({ 
+                          error: 'Forbidden', 
+                          message: guard.message || `Access restricted to roles: ${guard.roles.join(', ')}` 
+                        });
+                      }
+                    }
+
+                    // Check 'check' field: custom predicate function
+                    if (typeof guard.check === 'function') {
+                      const allowed = await guard.check(req);
+                      if (!allowed) {
+                        return res.status(403).json({ 
+                          error: 'Forbidden', 
+                          message: guard.message || 'Access denied by route guard.' 
+                        });
+                      }
+                    }
+
+                    // Check 'methods' field: only allow specific HTTP methods
+                    if (guard.methods && Array.isArray(guard.methods)) {
+                      if (!guard.methods.includes(method)) {
+                        return res.status(405).json({ 
+                          error: 'Method Not Allowed', 
+                          message: `Only ${guard.methods.join(', ')} allowed on this route.` 
+                        });
+                      }
+                    }
+                  }
+                } catch (e) {
+                  if (config.features.logging) console.error('❌ Guard error:', e.message);
+                }
+              }
+            }
+
             const handler = getModule(filePath);
             
             // Feature: HTTP Method Exports
@@ -1005,6 +1121,44 @@ function startServer(port = 3000) {
 
                 if (validationErrors.length > 0) {
                   return res.status(400).json({ error: "Validation Failed", details: validationErrors });
+                }
+              }
+
+              // Feature: Response Transformers (_transform.js)
+              if (config.features.transforms) {
+                const transformDir = path.dirname(filePath);
+                let transformPath = path.join(transformDir, '_transform.js');
+                if (!fs.existsSync(transformPath)) transformPath = path.join(transformDir, '_transform.ts');
+                
+                // Also check parent directories up to apiDir
+                if (!fs.existsSync(transformPath)) {
+                  let searchDir = path.dirname(transformDir);
+                  while (searchDir.length >= apiDir.length && searchDir.startsWith(apiDir)) {
+                    const parentTransform = path.join(searchDir, '_transform.js');
+                    const parentTransformTs = path.join(searchDir, '_transform.ts');
+                    if (fs.existsSync(parentTransform)) { transformPath = parentTransform; break; }
+                    if (fs.existsSync(parentTransformTs)) { transformPath = parentTransformTs; break; }
+                    if (searchDir === apiDir) break;
+                    searchDir = path.dirname(searchDir);
+                  }
+                }
+
+                if (fs.existsSync(transformPath)) {
+                  // Intercept res.json to apply transform
+                  const originalJson = res.json;
+                  res.json = (data) => {
+                    try {
+                      const transformModule = getModule(transformPath);
+                      const transformer = transformModule.default || transformModule;
+                      if (typeof transformer === 'function') {
+                        const transformed = transformer(data, req, res);
+                        return originalJson.call(res, transformed);
+                      }
+                    } catch (e) {
+                      if (config.features.logging) console.error('❌ Transform error:', e.message);
+                    }
+                    return originalJson.call(res, data);
+                  };
                 }
               }
 

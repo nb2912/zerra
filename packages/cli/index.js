@@ -9,7 +9,7 @@ const program = new Command();
 
 program
   .command("generate <type> <name>")
-  .description("Scaffold a new route, middleware, or job")
+  .description("Scaffold a new route, middleware, job, guard, or transform")
   .action((type, name) => {
     const isTs = fs.existsSync(path.join(process.cwd(), "tsconfig.json"));
     const ext = isTs ? "ts" : "js";
@@ -29,8 +29,16 @@ program
     } else if (type === "job") {
       targetPath = path.join(process.cwd(), "jobs", `${name}.${ext}`);
       template = `export const schedule = "0 0 * * *"; // Midnight every day\nexport const task = async () => {\n  console.log("Job ${name} running...");\n};\n`;
+    } else if (type === "guard") {
+      targetPath = path.join(process.cwd(), "api", name, `_guard.${ext}`);
+      template = `// Declarative Route Guard\n// Zerra automatically enforces these rules before the handler runs.\nexport default {\n  require: "auth",       // Requires req.user to exist\n  // roles: ["admin"],   // Restrict to specific roles\n  // methods: ["GET"],   // Restrict HTTP methods\n  // check: (req) => req.user.plan === "pro", // Custom predicate\n  // message: "Custom denial message"\n};\n`;
+    } else if (type === "transform") {
+      targetPath = path.join(process.cwd(), "api", name, `_transform.${ext}`);
+      template = isTs
+        ? `// Response Transformer\n// Zerra wraps all res.json() calls in this directory through this function.\nexport default (data: any, req: any, res: any) => {\n  return {\n    success: res.statusCode < 400,\n    data,\n    timestamp: Date.now()\n  };\n};\n`
+        : `// Response Transformer\n// Zerra wraps all res.json() calls in this directory through this function.\nexport default (data, req, res) => {\n  return {\n    success: res.statusCode < 400,\n    data,\n    timestamp: Date.now()\n  };\n};\n`;
     } else {
-      console.error(`❌ Unknown type '${type}'. Use 'route', 'middleware', or 'job'.`);
+      console.error(`❌ Unknown type '${type}'. Use 'route', 'middleware', 'job', 'guard', or 'transform'.`);
       return;
     }
 
@@ -94,7 +102,9 @@ program
           { name: "Dev Dashboard (/__zerra)", value: "dashboard", checked: true },
           { name: "Static File Serving (public/)", value: "static", checked: true },
           { name: "Built-in Rate Limiting", value: "rateLimiting", checked: false },
-          { name: "Cron Job Scheduler (jobs/)", value: "cron", checked: true }
+          { name: "Cron Job Scheduler (jobs/)", value: "cron", checked: true },
+          { name: "Declarative Route Guards (_guard.js)", value: "guards", checked: true },
+          { name: "Response Transformers (_transform.js)", value: "transforms", checked: true }
         ]
       },
       {

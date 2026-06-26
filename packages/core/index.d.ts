@@ -13,6 +13,7 @@ export interface ZerraRequest extends IncomingMessage {
   }>;
   params: Record<string, string>;
   cookies: Record<string, string>; // Feature 1: Parsed Cookies
+  user?: any; // Populated by auth middleware, used by guards
 }
 
 export interface ZerraResponse extends ServerResponse {
@@ -41,6 +42,8 @@ export interface ZerraConfig {
     static?: boolean; // Feature 4: Static File Serving
     rateLimiting?: boolean | { max: number; windowMs: number }; // Feature 5: Built-in Rate Limiting
     cron?: boolean; // Feature 6: Built-in Cron Job Scheduler
+    guards?: boolean; // Feature: Declarative Route Guards (_guard.js)
+    transforms?: boolean; // Feature: Response Transformers (_transform.js)
   };
   plugins?: string[];
 }
@@ -52,6 +55,16 @@ export interface ZerraApp {
 }
 
 export function startServer(port?: number): void;
+
+export interface ZerraGuard {
+  require?: 'auth';
+  roles?: string[];
+  methods?: string[];
+  check?: (req: ZerraRequest) => boolean | Promise<boolean>;
+  message?: string;
+}
+
+export type ZerraTransformer = (data: any, req: ZerraRequest, res: ZerraResponse) => any;
 
 export class ZerraError extends Error {
   status: number;
