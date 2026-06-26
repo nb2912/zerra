@@ -22,6 +22,8 @@ const DOCS_NAV = [
       { title: "Middleware", href: "/docs/middleware" },
       { title: "Validation", href: "/docs/validation" },
       { title: "Authentication", href: "/docs/auth" },
+      { title: "Error Handling", href: "/docs/errors" },
+      { title: "API Docs (Swagger)", href: "/docs/swagger" },
     ],
   },
   {

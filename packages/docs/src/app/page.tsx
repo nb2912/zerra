@@ -130,6 +130,22 @@ export default function Home() {
               Real-time comes standard. Just drop a <code className="bg-foreground/10 px-2 py-1 rounded">_ws.js</code> file anywhere in your route tree to effortlessly establish persistent WebSocket connections.
             </p>
           </div>
+
+          {/* Auto-Generated API Docs Feature */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Auto-Generated Swagger</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Never write OpenAPI specs manually again. Zerra dynamically analyzes your routes and schemas to generate an interactive Swagger UI at <code className="bg-foreground/10 px-2 py-1 rounded">/__zerra/docs</code>.
+            </p>
+          </div>
+
+          {/* Standardized Errors Feature */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Standardized Errors</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Ditch the <code className="bg-foreground/10 px-2 py-1 rounded">try/catch</code> boilerplate. Throw a <code className="bg-foreground/10 px-2 py-1 rounded">ZerraError.NotFound()</code> anywhere, and the framework automatically formats a clean, standardized HTTP JSON response.
+            </p>
+          </div>
         </div>
       </section>
 
