@@ -1,5 +1,3 @@
-import { AlertCircle, Terminal } from "lucide-react";
-
 export default function ErrorsDocs() {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

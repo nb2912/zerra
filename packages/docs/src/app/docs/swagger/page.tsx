@@ -1,5 +1,3 @@
-import { BookOpen, Sparkles } from "lucide-react";
-
 export default function SwaggerDocs() {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
