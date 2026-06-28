@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import type { Server } from 'http';
 
 export interface ZerraRequest extends IncomingMessage {
   query: Record<string, string>;
@@ -12,16 +13,18 @@ export interface ZerraRequest extends IncomingMessage {
     buffer: Buffer;
   }>;
   params: Record<string, string>;
-  cookies: Record<string, string>; // Feature 1: Parsed Cookies
-  user?: any; // Populated by auth middleware, used by guards
+  cookies: Record<string, string>;
+  user?: any;
+  id?: string; // Set by request tracing feature
 }
 
 export interface ZerraResponse extends ServerResponse {
   status(code: number): ZerraResponse;
   json(data: any): void;
   cors(options?: { origin?: string; methods?: string }): ZerraResponse;
-  sendFile(filePath: string): void; // Feature 2: Send File helper
-  redirect(url: string, status?: number): void; // Feature 3: Redirect helper
+  sendFile(filePath: string): void;
+  redirect(url: string, status?: number): void;
+  cache(ttlSeconds: number): ZerraResponse; // Response caching helper
 }
 
 export type ZerraHandler = (req: ZerraRequest, res: ZerraResponse) => void | Promise<void>;
@@ -32,19 +35,24 @@ export interface ZerraConfig {
   features: {
     logging?: boolean;
     dynamicRouting?: boolean;
-    
     middleware?: boolean;
     dotenv?: boolean;
     validation?: boolean;
     multipart?: boolean;
     errors?: boolean;
     dashboard?: boolean;
-    static?: boolean; // Feature 4: Static File Serving
-    rateLimiting?: boolean | { max: number; windowMs: number }; // Feature 5: Built-in Rate Limiting
-    cron?: boolean; // Feature 6: Built-in Cron Job Scheduler
-    guards?: boolean; // Feature: Declarative Route Guards (_guard.js)
-    transforms?: boolean; // Feature: Response Transformers (_transform.js)
+    static?: boolean;
+    rateLimiting?: boolean | { max: number; windowMs: number };
+    cron?: boolean;
+    securityHeaders?: boolean;
+    cors?: boolean;
+    requestTracing?: boolean;
+    guards?: boolean;
+    transforms?: boolean;
   };
+  cors?: { origin: string; methods: string };
+  routePrefix?: string;
+  maxBodySize?: number; // Max body size in MB (default: 1)
   plugins?: string[];
 }
 
@@ -54,7 +62,7 @@ export interface ZerraApp {
   config: ZerraConfig;
 }
 
-export function startServer(port?: number): void;
+export function startServer(port?: number): Server;
 
 export interface ZerraGuard {
   require?: 'auth';
