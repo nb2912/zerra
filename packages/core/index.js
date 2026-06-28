@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 function startServer(port = 3000) {
   const isDev = process.env.NODE_ENV !== 'production';
@@ -197,7 +198,7 @@ function startServer(port = 3000) {
 
     // Feature: Request Tracing
     if (config.features.requestTracing) {
-      req.id = req.headers['x-request-id'] || require('crypto').randomUUID();
+      req.id = req.headers['x-request-id'] || crypto.randomUUID();
       res.setHeader('X-Request-Id', req.id);
     }
 
@@ -275,7 +276,10 @@ function startServer(port = 3000) {
     if (req.headers.cookie) {
       req.headers.cookie.split(';').forEach(cookie => {
         const parts = cookie.split('=');
-        req.cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+        const key = (parts.shift() || '').trim();
+        if (key) {
+          try { req.cookies[key] = decodeURIComponent(parts.join('=')); } catch (e) { req.cookies[key] = parts.join('='); }
+        }
       });
     }
 
@@ -307,6 +311,7 @@ function startServer(port = 3000) {
     };
 
     // 4. Enhanced DX: Automatic Body & File Parsing
+    const MAX_BODY_SIZE = (config.maxBodySize || 1) * 1024 * 1024; // Default 1MB
     const parseBody = () => {
       return new Promise((resolve) => {
         if (['GET', 'HEAD', 'OPTIONS'].includes(method)) return resolve({ body: null, files: [] });
@@ -340,8 +345,20 @@ function startServer(port = 3000) {
           req.pipe(bb);
         } else {
           let rawBody = '';
-          req.on('data', chunk => { rawBody += chunk.toString(); });
+          let receivedBytes = 0;
+          let aborted = false;
+          req.on('data', chunk => {
+            receivedBytes += chunk.length;
+            if (receivedBytes > MAX_BODY_SIZE) {
+              aborted = true;
+              req.destroy();
+              resolve({ body: null, files: [], error: 'BODY_TOO_LARGE' });
+              return;
+            }
+            rawBody += chunk.toString();
+          });
           req.on('end', () => {
+            if (aborted) return;
             try {
               if (contentType.includes('application/json') && rawBody) {
                 resolve({ body: JSON.parse(rawBody), files: [] });
@@ -362,6 +379,9 @@ function startServer(port = 3000) {
       req.files = [];
     } else {
       const parsedData = await parseBody();
+      if (parsedData.error === 'BODY_TOO_LARGE') {
+        return res.status(413).json({ error: 'Payload Too Large', message: `Request body exceeds the maximum size of ${MAX_BODY_SIZE / (1024*1024)}MB.` });
+      }
       req.body = parsedData.body;
       req.files = parsedData.files;
     }
@@ -382,45 +402,64 @@ function startServer(port = 3000) {
 
     // Feature 4: Built-in Rate Limiting
     if (config.features.rateLimiting) {
-      if (!global.rateLimitStore) global.rateLimitStore = {};
+      if (!global.rateLimitStore) {
+        global.rateLimitStore = new Map();
+        // Cleanup expired entries every 60 seconds
+        setInterval(() => {
+          const now = Date.now();
+          for (const [key, val] of global.rateLimitStore) {
+            if (now > val.resetTime) global.rateLimitStore.delete(key);
+          }
+        }, 60000).unref();
+      }
       const ip = req.socket.remoteAddress || 'unknown';
       const now = Date.now();
       
       const rlConfig = typeof config.features.rateLimiting === 'object' ? config.features.rateLimiting : { max: 100, windowMs: 60000 };
+      const entry = global.rateLimitStore.get(ip);
       
-      if (!global.rateLimitStore[ip] || now > global.rateLimitStore[ip].resetTime) {
-        global.rateLimitStore[ip] = { count: 1, resetTime: now + rlConfig.windowMs };
+      if (!entry || now > entry.resetTime) {
+        global.rateLimitStore.set(ip, { count: 1, resetTime: now + rlConfig.windowMs });
       } else {
-        global.rateLimitStore[ip].count++;
+        entry.count++;
       }
       
-      if (global.rateLimitStore[ip].count > rlConfig.max) {
+      const current = global.rateLimitStore.get(ip);
+      if (current && current.count > rlConfig.max) {
         return res.status(429).json({ error: "Too Many Requests", message: "Rate limit exceeded. Try again later." });
       }
     }
 
     // Feature 5: Static File Serving (optimized via Set lookup in production)
     if (config.features.static && method === 'GET') {
-      const publicDir = path.join(process.cwd(), "public");
-      const publicPath = path.join(publicDir, cleanPath === "/index" ? "/" : cleanPath);
+      const publicDir = path.resolve(process.cwd(), "public");
+      const publicPath = path.resolve(publicDir, (cleanPath === "/index" ? "/" : cleanPath).replace(/^\//, ''));
       
-      let isStaticFile = false;
-      if (!isDev) {
-        isStaticFile = publicFilesSet.has(publicPath);
+      // Path traversal protection: ensure resolved path is within public dir
+      if (!publicPath.startsWith(publicDir)) {
+        // Attempted path traversal — skip static serving
       } else {
-        isStaticFile = fs.existsSync(publicDir) && publicPath.startsWith(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile();
-      }
+        let isStaticFile = false;
+        if (!isDev) {
+          isStaticFile = publicFilesSet.has(publicPath);
+        } else {
+          isStaticFile = fs.existsSync(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile();
+        }
 
-      if (isStaticFile) {
-         const ext = path.extname(publicPath);
-         const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
-         res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
-         return fs.createReadStream(publicPath).pipe(res);
+        if (isStaticFile) {
+           const ext = path.extname(publicPath);
+           const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+           res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+           return fs.createReadStream(publicPath).pipe(res);
+        }
       }
     }
 
-    // 10. Enhanced DX: Dev Dashboard
-    if (config.features.dashboard && cleanPath === '/__zerra') {
+    // HTML escape utility to prevent XSS in dashboard
+    const escapeHtml = (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // 10. Enhanced DX: Dev Dashboard (dev-only)
+    if (config.features.dashboard && isDev && cleanPath === '/__zerra') {
       const getRoutes = (dir, base = '') => {
         let results = [];
         if (!fs.existsSync(dir)) return results;
@@ -625,10 +664,10 @@ function startServer(port = 3000) {
                       const color = req.statusCode >= 500 ? 'var(--error)' : req.statusCode >= 400 ? 'var(--warning)' : 'var(--success)';
                       return `
                         <tr>
-                          <td><strong>${req.method}</strong></td>
-                          <td style="font-family: monospace; color: #444;">${req.path}</td>
-                          <td><span class="status-badge" style="background: ${color}">${req.statusCode}</span></td>
-                          <td style="color: #888;">${req.timestamp}</td>
+                          <td><strong>${escapeHtml(req.method)}</strong></td>
+                          <td style="font-family: monospace; color: #444;">${escapeHtml(req.path)}</td>
+                          <td><span class="status-badge" style="background: ${color}">${escapeHtml(String(req.statusCode))}</span></td>
+                          <td style="color: #888;">${escapeHtml(req.timestamp)}</td>
                           <td style="color: #888;">${req.duration}ms</td>
                         </tr>
                       `;
@@ -645,12 +684,15 @@ function startServer(port = 3000) {
                     const isImportant = ['PORT', 'NODE_ENV'].includes(k);
                     const isSystem = /^(ALLUSERSPROFILE|APPDATA|COMPUTERNAME|ComSpec|Common|DriverData|HOMEDRIVE|HOMEPATH|LOCALAPPDATA|LOGONSERVER|NUMBER_OF_PROCESSORS|OS|Path|PATHEXT|PROCESSOR|Program|PSModulePath|PUBLIC|System|TEMP|TMP|USER|windir|ZES_|VSCODE_|ANTIGRAVITY_)/i.test(k);
                     return (isCustom || isImportant) && !isSystem;
-                  }).map(k => `
+                  }).map(k => {
+                    const val = process.env[k] || '';
+                    const masked = val.length > 4 ? '****' + val.slice(-4) : '****';
+                    return `
                     <div style="background: #f9f9f9; border: 1px solid #eee; padding: 10px 15px; border-radius: 8px;">
-                      <div style="font-size: 0.7rem; color: #999; margin-bottom: 4px; font-weight: bold;">${k}</div>
-                      <div class="env-item">${process.env[k]}</div>
+                      <div style="font-size: 0.7rem; color: #999; margin-bottom: 4px; font-weight: bold;">${escapeHtml(k)}</div>
+                      <div class="env-item">${escapeHtml(masked)}</div>
                     </div>
-                  `).join('') || '<div style="color:#999">No custom variables loaded</div>'}
+                  `}).join('') || '<div style="color:#999">No custom variables loaded</div>'}
                 </div>
               </section>
             </main>
@@ -706,7 +748,7 @@ function startServer(port = 3000) {
     }
 
     // 11. Enhanced DX: Auto-Generated API Docs (Swagger UI)
-    if (config.features.dashboard && cleanPath === '/__zerra/docs') {
+    if (config.features.dashboard && isDev && cleanPath === '/__zerra/docs') {
       const getRoutes = (dir, base = '') => {
         let results = [];
         if (!fs.existsSync(dir)) return results;
@@ -822,7 +864,7 @@ function startServer(port = 3000) {
     }
 
     // 12. Enhanced DX: Health Check Endpoint
-    if (config.features.dashboard && cleanPath === '/__zerra/health') {
+    if (config.features.dashboard && cleanPath === '/__zerra/health') { // health endpoint allowed in prod
       const memUsage = process.memoryUsage();
       const formatBytes = (bytes) => {
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
@@ -1092,19 +1134,19 @@ function startServer(port = 3000) {
                 } else if (schemaDef.body || schemaDef.query || schemaDef.params) {
                   // Advanced schema object: { body: ZodSchema, query: ZodSchema }
                   if (schemaDef.body && schemaDef.body.safeParse) {
-                    const res = validateZod(schemaDef.body, req.body);
-                    if (res.error) validationErrors.push({ target: 'body', errors: res.details });
-                    else req.body = res.data;
+                    const bodyResult = validateZod(schemaDef.body, req.body);
+                    if (bodyResult.error) validationErrors.push({ target: 'body', errors: bodyResult.details });
+                    else req.body = bodyResult.data;
                   }
                   if (schemaDef.query && schemaDef.query.safeParse) {
-                    const res = validateZod(schemaDef.query, req.query);
-                    if (res.error) validationErrors.push({ target: 'query', errors: res.details });
-                    else req.query = res.data;
+                    const queryResult = validateZod(schemaDef.query, req.query);
+                    if (queryResult.error) validationErrors.push({ target: 'query', errors: queryResult.details });
+                    else req.query = queryResult.data;
                   }
                   if (schemaDef.params && schemaDef.params.safeParse) {
-                    const res = validateZod(schemaDef.params, req.params);
-                    if (res.error) validationErrors.push({ target: 'params', errors: res.details });
-                    else req.params = res.data;
+                    const paramsResult = validateZod(schemaDef.params, req.params);
+                    if (paramsResult.error) validationErrors.push({ target: 'params', errors: paramsResult.details });
+                    else req.params = paramsResult.data;
                   }
                 } else {
                   // Fallback to legacy basic typeof validation
@@ -1188,7 +1230,8 @@ function startServer(port = 3000) {
       } catch (err) {
         if (config.features.errors) {
           // Check for custom _error.js handler
-          const errorHandlerPath = path.join(apiDir, '_error.js');
+          let errorHandlerPath = path.join(apiDir, '_error.js');
+          if (!fs.existsSync(errorHandlerPath)) errorHandlerPath = path.join(apiDir, '_error.ts');
           if (fs.existsSync(errorHandlerPath)) {
             try {
               const errorHandler = getModule(errorHandlerPath);
@@ -1248,6 +1291,19 @@ function startServer(port = 3000) {
     }
   });
 
+  // Graceful shutdown handler
+  const shutdown = (signal) => {
+    console.log(`\n⏹️  ${signal} received. Shutting down gracefully...`);
+    server.close(() => {
+      console.log('✅ Server closed. Goodbye!');
+      process.exit(0);
+    });
+    // Force exit after 10 seconds if connections don't close
+    setTimeout(() => { process.exit(1); }, 10000).unref();
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
   server.listen(port, () => {
     console.log(`\n🚀 Zerra Engine started on http://localhost:${port}`);
     console.log(`📁 Mapping routes from: ${apiDir}\n`);
@@ -1263,7 +1319,7 @@ function startServer(port = 3000) {
             const filePath = path.join(jobsDir, file);
             const job = getModule(filePath);
             const schedule = job.schedule || (job.default && job.default.schedule);
-            const task = job.task || job.default || (job.default && job.default.task);
+            const task = job.task || (job.default && job.default.task) || (typeof job.default === 'function' ? job.default : null);
             
             if (schedule && typeof task === 'function') {
               nodeCron.schedule(schedule, task);
@@ -1276,6 +1332,8 @@ function startServer(port = 3000) {
       }
     }
   });
+
+  return server;
 }
 
 class ZerraError extends Error {
