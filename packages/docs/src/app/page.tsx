@@ -3,7 +3,6 @@ import { Stats } from "@/components/Marketing";
 import { Zap, Shield, Layout, Database } from "lucide-react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
-import DynamicTerminal from "@/components/DynamicTerminal";
 import AnimatedBackground from "@/components/AnimatedBackground";
 
 export default function Home() {
@@ -17,10 +16,10 @@ export default function Home() {
 
 
       {/* Hero Section */}
-      <section className="max-w-5xl mx-auto px-6 text-center mb-40 relative z-10 pt-24 md:pt-32 flex flex-col items-center">
+      <section className="max-w-4xl mx-auto px-6 text-center mb-40 relative z-10 pt-10 md:pt-12 flex flex-col items-center">
         
         {/* Minimalist Title */}
-        <h1 className="text-5xl md:text-6xl lg:text-[80px] font-bold tracking-tight mb-6 text-foreground animate-in slide-in-from-bottom-8 fade-in duration-1000 delay-150 fill-mode-both leading-tight">
+        <h1 className="text-4xl md:text-5xl lg:text-[80px] font-bold tracking-tight mb-6 text-foreground animate-in slide-in-from-bottom-8 fade-in duration-1000 delay-150 fill-mode-both leading-tight">
           The CLI-first Backend Framework
         </h1>
         
@@ -149,24 +148,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Dev Console Spotlight */}
-      <section className="max-w-6xl mx-auto px-6 mb-32 md:mb-48">
-        <div className="rounded-[32px] md:rounded-[48px] border border-border bg-gradient-to-b from-foreground/[0.05] to-transparent p-[2px] overflow-hidden">
-          <div className="rounded-[30px] md:rounded-[46px] bg-background p-6 md:p-20 text-center border border-border relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] md:w-1/2 h-[2px] bg-gradient-to-r from-transparent via-foreground/30 to-transparent" />
-            
-            <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-8 bg-gradient-to-br from-foreground to-foreground/50 bg-clip-text text-transparent">
-              The Dev Console.
-            </h2>
-            <p className="text-zinc-500 text-lg md:text-xl mb-14 max-w-3xl mx-auto leading-relaxed font-medium">
-              Test your routes, monitor performance, and debug your application in real-time. 
-              Built directly into the core runtime. Accessible at <code className="bg-foreground/5 text-foreground px-3 py-1 rounded-md border border-border">/__zerra</code>.
-            </p>
-            
-            <DynamicTerminal />
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 pb-16 border-t border-border flex flex-col md:flex-row items-center justify-between gap-8 pt-16 text-zinc-500 text-sm">
@@ -179,7 +160,7 @@ export default function Home() {
         <p className="font-medium text-zinc-600 italic">© 2026 Zerra Framework. MIT Licensed.</p>
         <div className="flex items-center gap-8 font-semibold">
            <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-foreground transition-colors">GitHub</a>
+           <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </div>
       </footer>
 
@@ -190,10 +171,12 @@ export default function Home() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "Zerra",
+            "name": "Zerra Framework",
+            "alternateName": "Zerra",
+            "url": "https://zerra.dev",
             "operatingSystem": "Cross-platform",
             "applicationCategory": "DeveloperApplication",
-            "description": "Production-grade backend framework built for speed and DX.",
+            "description": "Zerra is a production-grade, CLI-first backend framework built for Node.js and TypeScript.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -201,7 +184,8 @@ export default function Home() {
             },
             "author": {
               "@type": "Organization",
-              "name": "Zerra"
+              "name": "Zerra",
+              "url": "https://github.com/nb2912/zerra"
             }
           })
         }}
