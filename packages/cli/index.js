@@ -277,7 +277,9 @@ program
         dashboard: answers.features.includes('dashboard'),
         static: answers.features.includes('static'),
         rateLimiting: answers.features.includes('rateLimiting'),
-        cron: answers.features.includes('cron')
+        cron: answers.features.includes('cron'),
+        guards: answers.features.includes('guards'),
+        transforms: answers.features.includes('transforms')
       };
       
       const configJsonPath = path.join(targetPath, 'zerra.config.json');
