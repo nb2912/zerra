@@ -96,14 +96,14 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       <div className="max-w-[1440px] mx-auto px-6 pt-24 flex gap-12 text-foreground">
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm lg:hidden" aria-hidden="true" onClick={() => setIsMobileMenuOpen(false)} />
         )}
 
         {/* Sidebar */}
         <aside className={`fixed inset-y-0 left-0 z-[70] w-72 bg-background border-r border-border p-6 transform transition-transform duration-300 lg:relative lg:translate-x-0 lg:border-none lg:p-0 lg:bg-transparent lg:block lg:w-64 lg:h-[calc(100vh-6rem)] lg:sticky lg:top-24 lg:pb-12 lg:shrink-0 overflow-y-auto scrollbar-hide ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-center justify-between lg:hidden mb-8">
             <Link href="/" className="font-bold text-[15px] tracking-tight">Zerra</Link>
-            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2 text-zinc-500 hover:text-foreground">
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2 text-zinc-500 hover:text-foreground" aria-label="Close mobile menu">
               <X size={20} />
             </button>
           </div>
@@ -136,7 +136,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
             <div className="flex flex-col gap-4 mt-4 pt-8 border-t border-border">
               <h4 className="text-[12px] font-bold text-foreground/50 uppercase tracking-[0.15em] ml-1">Community</h4>
-              <a href="https://github.com/nb2912/zerra" target="_blank" className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground flex items-center gap-2 px-1">
+              <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground flex items-center gap-2 px-1">
                 GitHub <ExternalLink size={14} className="opacity-50" />
               </a>
             </div>
@@ -157,6 +157,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               </nav>
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open mobile menu"
                 className="lg:hidden p-2 -mr-2 text-zinc-500 hover:text-foreground flex items-center gap-2 text-sm font-medium"
               >
                 <Menu size={16} />

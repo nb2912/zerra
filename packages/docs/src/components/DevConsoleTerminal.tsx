@@ -190,6 +190,7 @@ export default function DevConsoleTerminal() {
               onClick={() => setIsRunning(false)}
               className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Pause Simulation"
+              aria-label="Pause Simulation"
             >
               <Pause size={14} />
             </button>
@@ -197,6 +198,7 @@ export default function DevConsoleTerminal() {
               onClick={handleReset}
               className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Reset Console"
+              aria-label="Reset Console"
             >
               <RotateCcw size={14} />
             </button>
@@ -225,14 +227,16 @@ export default function DevConsoleTerminal() {
 
       {/* Overlay Play Trigger */}
       {!isRunning && (
-        <div 
+        <button 
           onClick={() => setIsRunning(true)}
-          className="absolute inset-0 bg-black/35 group-hover:bg-black/10 transition-colors duration-500 flex items-center justify-center cursor-pointer z-10"
+          type="button"
+          aria-label="Start Simulation"
+          className="absolute inset-0 w-full h-full bg-black/35 group-hover:bg-black/10 transition-colors duration-500 flex items-center justify-center cursor-pointer z-10"
         >
           <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 group-hover:scale-110 group-hover:bg-white/20 transition-all shadow-2xl duration-300">
             <Play className="text-white ml-1" size={28} fill="white" />
           </div>
-        </div>
+        </button>
       )}
     </div>
   );

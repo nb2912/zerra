@@ -151,7 +151,7 @@ export default function Compare() {
               <Link href="/docs/getting-started" className="bg-background text-foreground px-10 py-5 rounded-full font-black text-lg flex items-center gap-2 hover:scale-105 transition-all">
                 Get Started <ArrowRight size={20} />
               </Link>
-              <a href="https://github.com/nb2912/zerra" target="_blank" className="border-2 border-background/20 text-background px-10 py-5 rounded-full font-black text-lg hover:bg-background hover:text-foreground transition-all">
+              <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="border-2 border-background/20 text-background px-10 py-5 rounded-full font-black text-lg hover:bg-background hover:text-foreground transition-all">
                 View on GitHub
               </a>
            </div>
@@ -169,7 +169,7 @@ export default function Compare() {
         <p className="font-medium text-zinc-600 italic">© 2026 Zerra Framework. MIT Licensed.</p>
         <div className="flex items-center gap-8 font-semibold">
            <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-foreground transition-colors">GitHub</a>
+           <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </div>
       </footer>
     </main>

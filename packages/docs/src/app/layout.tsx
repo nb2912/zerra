@@ -19,12 +19,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://zerra.dev"),
   title: {
-    default: "Zerra — The CLI-first backend framework",
-    template: "%s | Zerra"
+    default: "Zerra Framework | The CLI-first Node.js Backend Framework",
+    template: "%s | Zerra Framework"
   },
-  description: "Production-grade backend framework built for speed and DX. File-based routing, colocated APIs, and built-in Dev Console.",
-  keywords: ["backend", "framework", "node.js", "typescript", "cli", "api", "fastify", "express", "zerra"],
+  description: "Zerra is a production-grade backend framework built for speed and DX. Build high-performance APIs with file-based routing, instant boot, and a built-in Dev Console.",
+  keywords: ["zerra", "zerra framework", "backend", "framework", "node.js framework", "typescript backend", "cli framework", "api framework", "fastify alternative", "express alternative"],
   authors: [{ name: "nb2912" }],
   creator: "nb2912",
   openGraph: {

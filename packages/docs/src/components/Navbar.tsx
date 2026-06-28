@@ -47,6 +47,8 @@ export default function Navbar() {
             <a 
               href="https://github.com/nb2912/zerra" 
               target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
               className="p-2 text-zinc-500 hover:text-foreground transition-colors"
             >
               <svg
@@ -73,6 +75,7 @@ export default function Navbar() {
             <button 
               className="md:hidden p-2 -mr-2 text-zinc-500 hover:text-foreground"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>

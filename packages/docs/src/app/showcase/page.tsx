@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 const SHOWCASE_ITEMS = [
@@ -47,10 +48,12 @@ export default function Showcase() {
           {SHOWCASE_ITEMS.map((item) => (
             <div key={item.title} className="group relative flex flex-col rounded-[32px] border border-border bg-foreground/[0.02] overflow-hidden hover:border-foreground/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
               <div className="aspect-[16/10] relative overflow-hidden bg-foreground/5">
-                <img 
+                <Image 
                   src={item.image} 
                   alt={item.title}
-                  className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                  fill
+                  unoptimized
+                  className="object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
                 />
                 <div className="absolute top-5 left-5">
                   <span className="px-3 py-1 rounded-full bg-background/50 backdrop-blur-xl border border-border text-[10px] font-bold uppercase tracking-widest text-foreground/80">
@@ -112,7 +115,7 @@ export default function Showcase() {
         <p className="font-medium text-zinc-600 italic">© 2026 Zerra Framework. MIT Licensed.</p>
         <div className="flex items-center gap-8 font-semibold">
            <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-foreground transition-colors">GitHub</a>
+           <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </div>
       </footer>
     </main>

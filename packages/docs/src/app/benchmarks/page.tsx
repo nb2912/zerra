@@ -139,7 +139,7 @@ export default function Benchmarks() {
         <p className="font-medium text-zinc-600 italic">© 2026 Zerra Framework. MIT Licensed.</p>
         <div className="flex items-center gap-8 font-semibold">
            <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-           <a href="https://github.com/nb2912/zerra" target="_blank" className="hover:text-foreground transition-colors">GitHub</a>
+           <a href="https://github.com/nb2912/zerra" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </div>
       </footer>
     </main>

@@ -17,6 +17,7 @@ export default function CopyButton({ text }: { text: string }) {
       onClick={handleCopy}
       className="text-zinc-500 hover:text-foreground transition-colors p-1"
       title="Copy to clipboard"
+      aria-label="Copy to clipboard"
     >
       {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
     </button>
