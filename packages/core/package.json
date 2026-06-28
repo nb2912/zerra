@@ -1,14 +1,35 @@
 {
   "name": "zerra-core",
   "version": "1.2.2",
-  "description": "",
+  "description": "The CLI-first Node.js backend framework. File-based routing, instant boot, built-in dev console.",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "zerra",
+    "backend",
+    "framework",
+    "nodejs",
+    "api",
+    "file-based-routing",
+    "typescript",
+    "rest-api",
+    "cli-framework",
+    "express-alternative"
+  ],
+  "author": "Nihal Basaniwal (nb2912)",
+  "license": "MIT",
+  "homepage": "https://zerra.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nb2912/zerra.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/nb2912/zerra/issues"
+  },
   "type": "commonjs",
   "dependencies": {
     "busboy": "^1.6.0",

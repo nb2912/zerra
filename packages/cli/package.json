@@ -1,7 +1,7 @@
 {
   "name": "create-zerra-app",
   "version": "1.2.2",
-  "description": "",
+  "description": "CLI scaffolding tool for Zerra — the CLI-first Node.js backend framework.",
   "main": "index.js",
   "bin": {
     "create-zerra-app": "index.js"
@@ -9,9 +9,27 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "zerra",
+    "create-zerra-app",
+    "cli",
+    "scaffolding",
+    "backend",
+    "nodejs",
+    "api-generator",
+    "project-starter"
+  ],
+  "author": "Nihal Basaniwal (nb2912)",
+  "license": "MIT",
+  "homepage": "https://zerra.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nb2912/zerra.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/nb2912/zerra/issues"
+  },
   "type": "commonjs",
   "dependencies": {
     "commander": "^14.0.3",
