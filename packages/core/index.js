@@ -2,44 +2,36 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const os = require("os");
 
 function startServer(port = 3000) {
   const isDev = process.env.NODE_ENV !== 'production';
   const jiti = require("jiti")(__filename);
-  const configPath = path.join(process.cwd(), 'zerra.config.json');
-  let config = {
-    features: {
-      logging: true,
-      dynamicRouting: true,
-      middleware: true,
-      dotenv: true,
-      validation: true,
-      multipart: true,
-      errors: true,
-      dashboard: true,
-      static: true, // Feature 4: Static File Serving
-      rateLimiting: false, // Feature 5: Built-in Rate Limiting
-      cron: true, // Feature 6: Built-in Cron Job Scheduler
-      securityHeaders: true, // Feature: Security Headers
-      cors: false, // Feature: Global CORS
-      requestTracing: true, // Feature: Request Tracing
-      guards: true, // Feature: Declarative Route Guards (_guard.js)
-      transforms: true, // Feature: Response Transformers (_transform.js)
-    },
-    cors: { origin: '*', methods: 'GET,POST,PUT,DELETE,OPTIONS' },
-    routePrefix: '',
-    plugins: []
-  };
-  if (fs.existsSync(configPath)) {
+  const configJsonPath = path.join(process.cwd(), 'zerra.config.json');
+  const configJsPath = path.join(process.cwd(), 'zerra.config.js');
+  const configTsPath = path.join(process.cwd(), 'zerra.config.ts');
+  
+  let userConfig = {};
+  if (fs.existsSync(configJsPath) || fs.existsSync(configTsPath)) {
     try {
-      const userConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      config.features = { ...config.features, ...(userConfig.features || {}) };
-      if (userConfig.cors) config.cors = { ...config.cors, ...userConfig.cors };
-      if (userConfig.routePrefix !== undefined) config.routePrefix = userConfig.routePrefix;
+      const p = fs.existsSync(configJsPath) ? configJsPath : configTsPath;
+      const mod = require("jiti")(__filename)(p);
+      userConfig = mod.default || mod;
+    } catch (e) {
+      console.warn("⚠️ Invalid zerra.config file.", e);
+    }
+  } else if (fs.existsSync(configJsonPath)) {
+    try {
+      userConfig = JSON.parse(fs.readFileSync(configJsonPath, 'utf8'));
     } catch (e) {
       console.warn("⚠️ Invalid zerra.config.json. Using defaults.");
     }
   }
+
+  if (userConfig.features) config.features = { ...config.features, ...userConfig.features };
+  if (userConfig.cors) config.cors = { ...config.cors, ...userConfig.cors };
+  if (userConfig.routePrefix !== undefined) config.routePrefix = userConfig.routePrefix;
+  if (userConfig.plugins) config.plugins = userConfig.plugins;
 
   // 1. Optimized module caching mechanism
   const moduleCache = new Map();
@@ -98,21 +90,50 @@ function startServer(port = 3000) {
     config
   };
 
+  const lifecycleHooks = {
+    onInit: [],
+    onServerStart: [],
+    onRequest: [],
+    onResponse: [],
+    onError: [],
+    onShutdown: []
+  };
+
+  const registerPlugin = (plugin) => {
+    if (plugin.onInit) lifecycleHooks.onInit.push(plugin.onInit);
+    if (plugin.onServerStart) lifecycleHooks.onServerStart.push(plugin.onServerStart);
+    if (plugin.onRequest) lifecycleHooks.onRequest.push(plugin.onRequest);
+    if (plugin.onResponse) lifecycleHooks.onResponse.push(plugin.onResponse);
+    if (plugin.onError) lifecycleHooks.onError.push(plugin.onError);
+    if (plugin.onShutdown) lifecycleHooks.onShutdown.push(plugin.onShutdown);
+  };
+
   // Load Plugins
   if (config.plugins && Array.isArray(config.plugins)) {
-    config.plugins.forEach(pluginPath => {
+    config.plugins.forEach(plugin => {
       try {
-        const plugin = getModule(path.isAbsolute(pluginPath) ? pluginPath : path.join(process.cwd(), pluginPath));
-        if (typeof plugin === 'function') plugin(zerra);
+        if (typeof plugin === 'string') {
+          const loaded = getModule(path.isAbsolute(plugin) ? plugin : path.join(process.cwd(), plugin));
+          if (typeof loaded === 'function') loaded(zerra);
+          else if (loaded && typeof loaded === 'object') registerPlugin(loaded.default || loaded);
+        } else if (plugin && typeof plugin === 'object') {
+          registerPlugin(plugin);
+        }
       } catch (e) {
-        console.error(`❌ Failed to load plugin: ${pluginPath}`, e);
+        console.error(`❌ Failed to load plugin:`, e);
       }
     });
   }
 
+  // Execute onInit hooks
+  for (const hook of lifecycleHooks.onInit) {
+    try { hook(zerra); } catch (e) { console.error('Plugin onInit Error:', e); }
+  }
+
   const apiDir = path.join(process.cwd(), "api");
 
-  // In-memory Route Table for fast production route resolution
+  // In-memory Radix Trie for fast production route resolution
+  let routeTrie = { children: {}, dynamicChild: null, route: null };
   let routeTable = [];
   
   function buildRouteTable(dir, base = '') {
@@ -155,20 +176,20 @@ function startServer(port = 3000) {
 
   if (!isDev) {
     routeTable = buildRouteTable(apiDir);
-    // Sort exact segments before dynamic parameter segments, and longer paths first
-    routeTable.sort((a, b) => {
-      const minLen = Math.min(a.segments.length, b.segments.length);
-      for (let i = 0; i < minLen; i++) {
-        const aSec = a.segments[i];
-        const bSec = b.segments[i];
-        const aDyn = aSec.startsWith('[');
-        const bDyn = bSec.startsWith('[');
-        if (aDyn !== bDyn) {
-          return aDyn ? 1 : -1;
+    for (const route of routeTable) {
+      let node = routeTrie;
+      for (const segment of route.segments) {
+        if (segment.startsWith('[') && segment.endsWith(']')) {
+          const paramName = segment.slice(1, -1);
+          if (!node.dynamicChild) node.dynamicChild = { paramName, node: { children: {}, dynamicChild: null, route: null } };
+          node = node.dynamicChild.node;
+        } else {
+          if (!node.children[segment]) node.children[segment] = { children: {}, dynamicChild: null, route: null };
+          node = node.children[segment];
         }
       }
-      return b.segments.length - a.segments.length;
-    });
+      node.route = route;
+    }
   }
 
   // Pre-cached static files set for production static serving
@@ -195,6 +216,11 @@ function startServer(port = 3000) {
   const server = http.createServer(async (req, res) => {
     const { url, method } = req;
     const startTime = Date.now();
+
+    // Execute onRequest hooks
+    for (const hook of lifecycleHooks.onRequest) {
+      try { await hook(req, res); } catch (e) { console.error('Plugin onRequest Error:', e); }
+    }
 
     // Feature: Request Tracing
     if (config.features.requestTracing) {
@@ -224,6 +250,11 @@ function startServer(port = 3000) {
     // 1. Enhanced DX: Beautiful Request Logging
     const originalEnd = res.end;
     res.end = function (...args) {
+      // Execute onResponse hooks
+      for (const hook of lifecycleHooks.onResponse) {
+        try { hook(req, res); } catch (e) { console.error('Plugin onResponse Error:', e); }
+      }
+
       const duration = Date.now() - startTime;
       const path = req.path || url;
 
@@ -324,16 +355,16 @@ function startServer(port = 3000) {
           const files = [];
           
           bb.on('file', (name, file, info) => {
-            const chunks = [];
-            file.on('data', data => chunks.push(data));
-            file.on('end', () => {
-              files.push({
-                fieldname: name,
-                filename: info.filename,
-                encoding: info.encoding,
-                mimetype: info.mimeType,
-                buffer: Buffer.concat(chunks)
-              });
+            const tmpPath = path.join(os.tmpdir(), `zerra-upload-${crypto.randomUUID()}`);
+            const stream = fs.createWriteStream(tmpPath);
+            file.pipe(stream);
+            
+            files.push({
+              fieldname: name,
+              filename: info.filename,
+              encoding: info.encoding,
+              mimetype: info.mimeType,
+              tmpPath
             });
           });
           
@@ -344,7 +375,7 @@ function startServer(port = 3000) {
           bb.on('close', () => resolve({ body, files }));
           req.pipe(bb);
         } else {
-          let rawBody = '';
+          let rawBody = [];
           let receivedBytes = 0;
           let aborted = false;
           req.on('data', chunk => {
@@ -355,15 +386,16 @@ function startServer(port = 3000) {
               resolve({ body: null, files: [], error: 'BODY_TOO_LARGE' });
               return;
             }
-            rawBody += chunk.toString();
+            rawBody.push(chunk);
           });
           req.on('end', () => {
             if (aborted) return;
             try {
-              if (contentType.includes('application/json') && rawBody) {
-                resolve({ body: JSON.parse(rawBody), files: [] });
+              const strBody = Buffer.concat(rawBody).toString();
+              if (contentType.includes('application/json') && strBody) {
+                resolve({ body: JSON.parse(strBody), files: [] });
               } else {
-                resolve({ body: rawBody, files: [] });
+                resolve({ body: strBody, files: [] });
               }
             } catch (e) {
               resolve({ body: {}, files: [] });
@@ -404,13 +436,6 @@ function startServer(port = 3000) {
     if (config.features.rateLimiting) {
       if (!global.rateLimitStore) {
         global.rateLimitStore = new Map();
-        // Cleanup expired entries every 60 seconds
-        setInterval(() => {
-          const now = Date.now();
-          for (const [key, val] of global.rateLimitStore) {
-            if (now > val.resetTime) global.rateLimitStore.delete(key);
-          }
-        }, 60000).unref();
       }
       const ip = req.socket.remoteAddress || 'unknown';
       const now = Date.now();
@@ -419,6 +444,11 @@ function startServer(port = 3000) {
       const entry = global.rateLimitStore.get(ip);
       
       if (!entry || now > entry.resetTime) {
+        // Enforce max size to prevent memory leak (passive eviction)
+        if (global.rateLimitStore.size > 10000) {
+          const firstKey = global.rateLimitStore.keys().next().value;
+          global.rateLimitStore.delete(firstKey);
+        }
         global.rateLimitStore.set(ip, { count: 1, resetTime: now + rlConfig.windowMs });
       } else {
         entry.count++;
@@ -436,20 +466,32 @@ function startServer(port = 3000) {
       const publicPath = path.resolve(publicDir, (cleanPath === "/index" ? "/" : cleanPath).replace(/^\//, ''));
       
       // Path traversal protection: ensure resolved path is within public dir
-      if (!publicPath.startsWith(publicDir)) {
+      if (cleanPath.indexOf('\0') !== -1 || !publicPath.startsWith(publicDir)) {
         // Attempted path traversal — skip static serving
       } else {
         let isStaticFile = false;
+        let stat = null;
         if (!isDev) {
           isStaticFile = publicFilesSet.has(publicPath);
+          if (isStaticFile) stat = fs.statSync(publicPath);
         } else {
-          isStaticFile = fs.existsSync(publicDir) && fs.existsSync(publicPath) && fs.statSync(publicPath).isFile();
+          isStaticFile = fs.existsSync(publicDir) && fs.existsSync(publicPath) && (stat = fs.statSync(publicPath)) && stat.isFile();
         }
 
-        if (isStaticFile) {
+        if (isStaticFile && stat) {
            const ext = path.extname(publicPath);
            const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+           
+           const etag = `W/"${stat.size}-${stat.mtime.getTime()}"`;
+           if (req.headers['if-none-match'] === etag) {
+             res.statusCode = 304;
+             return res.end();
+           }
+
            res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+           res.setHeader('Content-Length', stat.size);
+           res.setHeader('ETag', etag);
+           res.setHeader('Cache-Control', 'public, max-age=3600');
            return fs.createReadStream(publicPath).pipe(res);
         }
       }
@@ -850,7 +892,7 @@ function startServer(port = 3000) {
           <script>
             window.onload = function() {
               window.ui = SwaggerUIBundle({
-                spec: ${JSON.stringify(openapi)},
+                spec: ${JSON.stringify(openapi).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')},
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
@@ -916,33 +958,29 @@ function startServer(port = 3000) {
     let middlewarePaths = [];
 
     if (!isDev) {
-      // 1. Production Mode: Ultra-fast O(1)/O(N) in-memory route lookup
+      // 1. Production Mode: Ultra-fast O(K) Trie-based route lookup
       const reqSegments = cleanPath.split('/').filter(Boolean);
-      for (const route of routeTable) {
-        if (route.segments.length !== reqSegments.length) continue;
+      let node = routeTrie;
+      let isMatch = true;
+      const tempParams = {};
 
-        let isMatch = true;
-        const tempParams = {};
-
-        for (let i = 0; i < route.segments.length; i++) {
-          const routeSec = route.segments[i];
-          const reqSec = reqSegments[i];
-
-          if (routeSec.startsWith('[') && routeSec.endsWith(']')) {
-            const paramName = routeSec.slice(1, -1);
-            tempParams[paramName] = reqSec;
-          } else if (routeSec !== reqSec) {
-            isMatch = false;
-            break;
-          }
-        }
-
-        if (isMatch) {
-          filePath = route.filePath;
-          req.params = tempParams;
-          middlewarePaths = route.middlewarePaths;
+      for (let i = 0; i < reqSegments.length; i++) {
+        const seg = reqSegments[i];
+        if (node.children[seg]) {
+          node = node.children[seg];
+        } else if (node.dynamicChild) {
+          tempParams[node.dynamicChild.paramName] = seg;
+          node = node.dynamicChild.node;
+        } else {
+          isMatch = false;
           break;
         }
+      }
+
+      if (isMatch && node.route) {
+        filePath = node.route.filePath;
+        req.params = tempParams;
+        middlewarePaths = node.route.middlewarePaths;
       }
     } else {
       // 2. Development Mode: Dynamic Filesystem Walk for instant hot-reloading
@@ -1055,6 +1093,12 @@ function startServer(port = 3000) {
                   const guard = guardModule.default || guardModule;
                   
                   if (typeof guard === 'object' && guard !== null) {
+                    // Lifecycle hook for dynamic initialization (e.g. populating req.user)
+                    if (typeof guard.init === 'function') {
+                      await guard.init(req, res);
+                      if (responseSent) return;
+                    }
+
                     // Check 'require' field: if "auth", req.user must exist
                     if (guard.require === 'auth' && !req.user) {
                       return res.status(401).json({ 
@@ -1118,47 +1162,38 @@ function startServer(port = 3000) {
               if (config.features.validation && schemaDef) {
                 let validationErrors = [];
 
-                const validateZod = (zodSchema, data) => {
-                  const result = zodSchema.safeParse(data);
+                const validateZod = async (zodSchema, data) => {
+                  const result = await zodSchema.safeParseAsync(data);
                   if (!result.success) {
                     return { error: true, details: result.error.errors };
                   }
                   return { error: false, data: result.data };
                 };
 
-                if (schemaDef.safeParse) {
+                if (schemaDef.safeParseAsync || schemaDef.safeParse) {
                   // Direct Zod schema for body
-                  const result = validateZod(schemaDef, req.body);
+                  const result = await validateZod(schemaDef, req.body);
                   if (result.error) validationErrors.push(...result.details);
                   else req.body = result.data;
                 } else if (schemaDef.body || schemaDef.query || schemaDef.params) {
                   // Advanced schema object: { body: ZodSchema, query: ZodSchema }
-                  if (schemaDef.body && schemaDef.body.safeParse) {
-                    const bodyResult = validateZod(schemaDef.body, req.body);
+                  if (schemaDef.body && (schemaDef.body.safeParseAsync || schemaDef.body.safeParse)) {
+                    const bodyResult = await validateZod(schemaDef.body, req.body);
                     if (bodyResult.error) validationErrors.push({ target: 'body', errors: bodyResult.details });
                     else req.body = bodyResult.data;
                   }
-                  if (schemaDef.query && schemaDef.query.safeParse) {
-                    const queryResult = validateZod(schemaDef.query, req.query);
+                  if (schemaDef.query && (schemaDef.query.safeParseAsync || schemaDef.query.safeParse)) {
+                    const queryResult = await validateZod(schemaDef.query, req.query);
                     if (queryResult.error) validationErrors.push({ target: 'query', errors: queryResult.details });
                     else req.query = queryResult.data;
                   }
-                  if (schemaDef.params && schemaDef.params.safeParse) {
-                    const paramsResult = validateZod(schemaDef.params, req.params);
+                  if (schemaDef.params && (schemaDef.params.safeParseAsync || schemaDef.params.safeParse)) {
+                    const paramsResult = await validateZod(schemaDef.params, req.params);
                     if (paramsResult.error) validationErrors.push({ target: 'params', errors: paramsResult.details });
                     else req.params = paramsResult.data;
                   }
                 } else {
-                  // Fallback to legacy basic typeof validation
-                  if (!req.body || typeof req.body !== 'object') {
-                    validationErrors.push("Request body is required for this route.");
-                  } else {
-                    for (const [key, type] of Object.entries(schemaDef)) {
-                       if (typeof req.body[key] !== type) {
-                         validationErrors.push(`Expected '${key}' to be '${type}', got '${typeof req.body[key]}'`);
-                       }
-                    }
-                  }
+                  console.warn("⚠️ Legacy typeof schema validation is deprecated. Please use Zod schemas.");
                 }
 
                 if (validationErrors.length > 0) {
@@ -1204,7 +1239,40 @@ function startServer(port = 3000) {
                 }
               }
 
-              await actualHandler(req, res);
+              // Construct modern ctx object
+              const ctx = Object.create(req);
+              Object.assign(ctx, {
+                req,
+                res,
+                body: req.body,
+                query: req.query,
+                params: req.params,
+                headers: req.headers,
+                files: req.files || [],
+                user: req.user,
+                requestId: req.id,
+                services: global.services || {},
+                db: global.db || null
+              });
+
+              const result = await actualHandler(ctx, res);
+              
+              if (result && result.__zerra) {
+                if (result.headers) {
+                  for (const [k, v] of Object.entries(result.headers)) res.setHeader(k, v);
+                }
+                if (result.type === 'json') return res.status(result.status).json(result.data);
+                if (result.type === 'text') return res.status(result.status).send(result.data);
+                if (result.type === 'html') {
+                  res.setHeader('Content-Type', 'text/html');
+                  return res.status(result.status).send(result.data);
+                }
+                if (result.type === 'redirect') {
+                  res.statusCode = result.status;
+                  res.setHeader('Location', result.url);
+                  return res.end();
+                }
+              }
             } else {
               if (handler && typeof handler === "object" && !handler.default) {
                 res.status(405).json({ error: `Method ${method} Not Allowed on this route.` });
@@ -1225,9 +1293,19 @@ function startServer(port = 3000) {
           }
         };
 
-        await runGlobal();
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            if (!responseSent) reject(new Error("Request Timeout: Handler or middleware did not send a response within 30s"));
+          }, 30000).unref();
+        });
 
+        await Promise.race([runGlobal(), timeoutPromise]);
       } catch (err) {
+        // Execute onError hooks
+        for (const hook of lifecycleHooks.onError) {
+          try { hook(err, req, res); } catch (e) { console.error('Plugin onError Error:', e); }
+        }
+
         if (config.features.errors) {
           // Check for custom _error.js handler
           let errorHandlerPath = path.join(apiDir, '_error.js');
@@ -1292,8 +1370,18 @@ function startServer(port = 3000) {
   });
 
   // Graceful shutdown handler
+  global.activeJobs = [];
   const shutdown = (signal) => {
     console.log(`\n⏹️  ${signal} received. Shutting down gracefully...`);
+    
+    // Execute onShutdown hooks
+    for (const hook of lifecycleHooks.onShutdown) {
+      try { hook(); } catch (e) { console.error('Plugin onShutdown Error:', e); }
+    }
+
+    global.activeJobs.forEach(job => {
+      try { job.stop(); } catch (e) {}
+    });
     server.close(() => {
       console.log('✅ Server closed. Goodbye!');
       process.exit(0);
@@ -1307,6 +1395,11 @@ function startServer(port = 3000) {
   server.listen(port, () => {
     console.log(`\n🚀 Zerra Engine started on http://localhost:${port}`);
     console.log(`📁 Mapping routes from: ${apiDir}\n`);
+
+    // Execute onServerStart hooks
+    for (const hook of lifecycleHooks.onServerStart) {
+      try { hook({ port }); } catch (e) { console.error('Plugin onServerStart Error:', e); }
+    }
 
     // Feature 6: Built-in Cron Job Scheduler
     if (config.features.cron) {
@@ -1322,7 +1415,8 @@ function startServer(port = 3000) {
             const task = job.task || (job.default && job.default.task) || (typeof job.default === 'function' ? job.default : null);
             
             if (schedule && typeof task === 'function') {
-              nodeCron.schedule(schedule, task);
+              const cronTask = nodeCron.schedule(schedule, task);
+              global.activeJobs.push(cronTask);
               console.log(`⏰ Scheduled job: ${file} [${schedule}]`);
             }
           });
@@ -1350,4 +1444,28 @@ class ZerraError extends Error {
   static Internal(message = "Internal Server Error") { return new ZerraError(500, message); }
 }
 
-module.exports = { startServer, ZerraError };
+function defineConfig(config) {
+  return config;
+}
+
+function definePlugin(plugin) {
+  return plugin;
+}
+
+function json(data, init = {}) {
+  return { __zerra: true, type: 'json', data, status: init.status || 200, headers: init.headers };
+}
+
+function text(data, init = {}) {
+  return { __zerra: true, type: 'text', data, status: init.status || 200, headers: init.headers };
+}
+
+function html(data, init = {}) {
+  return { __zerra: true, type: 'html', data, status: init.status || 200, headers: init.headers };
+}
+
+function redirect(url, status = 302) {
+  return { __zerra: true, type: 'redirect', url, status };
+}
+
+module.exports = { startServer, ZerraError, defineConfig, definePlugin, json, text, html, redirect };

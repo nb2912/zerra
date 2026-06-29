@@ -7,33 +7,42 @@ const inquirer = require("inquirer");
 
 const program = new Command();
 
+function findUp(filename, dir = process.cwd()) {
+  const filePath = path.join(dir, filename);
+  if (fs.existsSync(filePath)) return filePath;
+  const parentDir = path.dirname(dir);
+  if (parentDir === dir) return null;
+  return findUp(filename, parentDir);
+}
+
 program
   .command("generate <type> <name>")
   .description("Scaffold a new route, middleware, job, guard, or transform")
   .action((type, name) => {
-    const isTs = fs.existsSync(path.join(process.cwd(), "tsconfig.json"));
+    const projectRoot = findUp("zerra.config.json") ? path.dirname(findUp("zerra.config.json")) : (findUp("package.json") ? path.dirname(findUp("package.json")) : process.cwd());
+    const isTs = !!findUp("tsconfig.json");
     const ext = isTs ? "ts" : "js";
     let targetPath = "";
     let template = "";
 
     if (type === "route") {
-      targetPath = path.join(process.cwd(), "api", `${name}.${ext}`);
+      targetPath = path.join(projectRoot, "api", `${name}.${ext}`);
       template = isTs 
-        ? `export const GET = async (req: any, res: any) => {\n  res.json({ message: "Hello from ${name}" });\n};\n`
-        : `export const GET = async (req, res) => {\n  res.json({ message: "Hello from ${name}" });\n};\n`;
+        ? `import { json } from "zerra";\n\nexport const GET = async (ctx: any) => {\n  return json({ message: "Hello from ${name}" });\n};\n`
+        : `import { json } from "zerra";\n\nexport const GET = async (ctx) => {\n  return json({ message: "Hello from ${name}" });\n};\n`;
     } else if (type === "middleware") {
-      targetPath = path.join(process.cwd(), "api", name, `_middleware.${ext}`);
+      targetPath = path.join(projectRoot, "api", name, `_middleware.${ext}`);
       template = isTs
         ? `export default async (req: any, res: any, next: Function) => {\n  // Middleware logic\n  await next();\n};\n`
         : `export default async (req, res, next) => {\n  // Middleware logic\n  await next();\n};\n`;
     } else if (type === "job") {
-      targetPath = path.join(process.cwd(), "jobs", `${name}.${ext}`);
+      targetPath = path.join(projectRoot, "jobs", `${name}.${ext}`);
       template = `export const schedule = "0 0 * * *"; // Midnight every day\nexport const task = async () => {\n  console.log("Job ${name} running...");\n};\n`;
     } else if (type === "guard") {
-      targetPath = path.join(process.cwd(), "api", name, `_guard.${ext}`);
+      targetPath = path.join(projectRoot, "api", name, `_guard.${ext}`);
       template = `// Declarative Route Guard\n// Zerra automatically enforces these rules before the handler runs.\nexport default {\n  require: "auth",       // Requires req.user to exist\n  // roles: ["admin"],   // Restrict to specific roles\n  // methods: ["GET"],   // Restrict HTTP methods\n  // check: (req) => req.user.plan === "pro", // Custom predicate\n  // message: "Custom denial message"\n};\n`;
     } else if (type === "transform") {
-      targetPath = path.join(process.cwd(), "api", name, `_transform.${ext}`);
+      targetPath = path.join(projectRoot, "api", name, `_transform.${ext}`);
       template = isTs
         ? `// Response Transformer\n// Zerra wraps all res.json() calls in this directory through this function.\nexport default (data: any, req: any, res: any) => {\n  return {\n    success: res.statusCode < 400,\n    data,\n    timestamp: Date.now()\n  };\n};\n`
         : `// Response Transformer\n// Zerra wraps all res.json() calls in this directory through this function.\nexport default (data, req, res) => {\n  return {\n    success: res.statusCode < 400,\n    data,\n    timestamp: Date.now()\n  };\n};\n`;
