@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const docsSitemap = docsRoutes.map((route) => ({
-    url: \`https://zerra.dev/docs\${route}\`,
+    url: `https://zerra.dev/docs${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: route === '' ? 0.9 : 0.8,
