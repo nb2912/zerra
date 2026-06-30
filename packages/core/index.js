@@ -542,257 +542,395 @@ function startServer(port = 3000) {
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(`
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Zerra Dev Dashboard</title>
-            <style>
-              :root {
-                --primary: #0070f3;
-                --bg: #fafafa;
-                --card-bg: #ffffff;
-                --text: #171717;
-                --text-light: #666;
-                --border: #eaeaea;
-                --success: #0070f3;
-                --warning: #f5a623;
-                --error: #ff0000;
-              }
-              body { 
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-                line-height: 1.5; 
-                background: var(--bg); 
-                color: var(--text);
-                margin: 0;
-                padding: 0;
-              }
-              header {
-                background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-                color: #fff;
-                padding: 16px 40px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                position: sticky;
-                top: 0;
-                z-index: 100;
-              }
-              header h1 { 
-                margin: 0; 
-                font-size: 1.2rem; 
-                display: flex; 
-                align-items: center; 
-                gap: 12px; 
-                letter-spacing: 2px;
-                font-weight: 800;
-              }
-              header h1 span.console-text { 
-                font-weight: 300; 
-                opacity: 0.6; 
-                font-size: 0.9rem; 
-                letter-spacing: 0;
-                border-left: 1px solid rgba(255,255,255,0.2);
-                padding-left: 12px;
-              }
-              .badge { font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 20px; font-weight: normal; }
-              
-              main { max-width: 1300px; margin: 40px auto; padding: 0 20px; }
-              
-              .grid { display: grid; grid-template-columns: 2.5fr 1fr; gap: 25px; margin-bottom: 20px; }
-              @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
-              
-              section { 
-                background: var(--card-bg); 
-                padding: 24px; 
-                border-radius: 12px; 
-                border: 1px solid var(--border);
-                box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-              }
-              h2 { margin-top: 0; font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; }
-              
-              ul { list-style: none; padding: 0; margin: 0; }
-              li { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-              
-              .route-link { color: var(--primary); text-decoration: none; font-weight: 500; font-family: monospace; font-size: 1rem; }
-              .route-link:hover { text-decoration: underline; }
-              
-              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-              th { text-align: left; padding: 12px 8px; border-bottom: 2px solid var(--border); font-size: 0.85rem; color: var(--text-light); }
-              td { padding: 12px 8px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-              
-              .status-badge { 
-                padding: 4px 10px; 
-                border-radius: 6px; 
-                font-size: 0.75rem; 
-                font-weight: bold; 
-                color: #fff;
-              }
-              
-              .env-item { background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #444; }
-              
-              /* Fix for long error messages/stacks */
-              pre { 
-                white-space: pre-wrap !important; 
-                word-break: break-all !important; 
-                max-height: 300px !important; 
-                overflow-y: auto !important; 
-                margin: 0 !important; 
-              }
-            </style>
-          </head>
-          <body>
-            <main style="margin-top: 20px;">
-              <div class="grid">
-                <section>
-                  <h2>📂 Active Routes & Playground</h2>
-                  <div style="display: flex; flex-direction: column; gap: 15px;">
-                    ${routes.length > 0 ? routes.map(r => {
-                      const sampleBody = r.schema ? JSON.stringify(Object.fromEntries(
-                        Object.entries(r.schema).map(([k, t]) => [k, t === 'number' ? 0 : t === 'boolean' ? false : 'text'])
-                      )) : '{}';
-                      
-                      return `
-                      <div style="border: 1px solid var(--border); border-radius: 8px; padding: 15px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                          <a href="${r.path}" class="route-link" style="font-size: 1.1rem;">${r.path}</a>
-                          ${r.schema ? '<span class="badge" style="background:#eee; color:#666;">Has Schema</span>' : ''}
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-                          <select id="method-${r.path}" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #fff; font-family: inherit;">
-                            <option value="GET">GET</option>
-                            <option value="POST">POST</option>
-                            <option value="PUT">PUT</option>
-                            <option value="PATCH">PATCH</option>
-                            <option value="DELETE">DELETE</option>
-                          </select>
-                          <input type="text" id="body-${r.path}" value='${sampleBody}' placeholder='{"key": "value"}' style="flex-grow: 1; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; font-size: 0.8rem;">
-                          <button onclick="testRoute('${r.path}')" style="background: var(--primary); color: #fff; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">SEND</button>
-                        </div>
- 
-                        <div id="res-${r.path}" style="display: none; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 10px; position: relative;">
-                          <div id="status-${r.path}" style="position: absolute; top: 8px; right: 8px; font-size: 0.7rem; font-weight: bold;"></div>
-                          <pre style="margin: 0;"></pre>
-                        </div>
-                      </div>
-                    `}).join('') : '<div style="color:#999">No routes found in /api</div>'}
-                  </div>
-                </section>
- 
-                <section>
-                  <h2>⚙️ Features</h2>
-                  <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${Object.entries(config.features).map(([k, v]) => `
-                      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px;">
-                        <span style="color: ${v ? 'inherit' : '#999'}; font-weight: 500;">${k}</span>
-                        <span>${v ? '✅' : '❌'}</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                </section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zerra Dev Console</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --text: #f8fafc;
+      --text-light: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      line-height: 1.6; 
+      background: var(--bg); 
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { 
+      margin: 0; 
+      font-size: 1.5rem; 
+      font-weight: 700;
+      background: linear-gradient(to right, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge { 
+      font-size: 0.7rem; 
+      background: rgba(99, 102, 241, 0.2); 
+      color: #818cf8;
+      padding: 2px 8px; 
+      border-radius: 9999px; 
+      font-weight: 600; 
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    main { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+    
+    section { 
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      padding: 1.5rem; 
+      border-radius: 16px; 
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 24px -1px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -1px rgba(0,0,0,0.3);
+    }
+    h2 { 
+      margin-top: 0; 
+      font-size: 1.1rem; 
+      margin-bottom: 1.5rem; 
+      color: var(--text); 
+      display: flex; 
+      align-items: center; 
+      gap: 10px;
+      font-weight: 600;
+    }
+    
+    /* Route Cards */
+    .route-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    .route-card:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+    }
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .route-link { 
+      color: #e2e8f0; 
+      text-decoration: none; 
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .route-link:hover { color: #818cf8; }
+    
+    /* Form Elements */
+    .input-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    select, input[type="text"] {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    input[type="text"] { flex-grow: 1; }
+    button {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    button:active { transform: translateY(0); }
+    
+    /* Response Area */
+    .response-area {
+      background: #000;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.85rem;
+      position: relative;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+    .status-tag {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    pre { margin: 0; color: #a5b4fc; }
+    
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-light); font-weight: 500; font-size: 0.85rem; }
+    td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    /* Features & Env */
+    .feature-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .feature-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.1);
+    }
+    .env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .env-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+    }
+    .env-key { font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.25rem; font-weight: 600; text-transform: uppercase; }
+    .env-val { font-family: 'SF Mono', Consolas, monospace; font-size: 0.9rem; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🚀 Zerra<span style="font-weight:300;opacity:0.7;">Console</span></h1>
+    <div class="badge">LIVE ENGINE</div>
+  </header>
+  <main>
+    <div class="grid">
+      <section>
+        <h2>⚡ Active Routes & Playground</h2>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          ${routes.length > 0 ? routes.map(r => {
+            const sampleBody = r.schema ? JSON.stringify(Object.fromEntries(
+              Object.entries(r.schema).map(([k, t]) => [k, t === 'number' ? 0 : t === 'boolean' ? false : 'text'])
+            )) : '{}';
+            
+            return `
+            <div class="route-card">
+              <div class="route-header">
+                <a href="${r.path}" class="route-link">${r.path}</a>
+                ${r.schema ? '<span class="badge">Protected by Schema</span>' : ''}
               </div>
- 
-              <section style="margin-bottom: 20px;">
-                <h2>📊 Recent Activity</h2>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>METHOD</th>
-                      <th>PATH</th>
-                      <th>STATUS</th>
-                      <th>TIME</th>
-                      <th>DURATION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${recentRequests.map(req => {
-                      const color = req.statusCode >= 500 ? 'var(--error)' : req.statusCode >= 400 ? 'var(--warning)' : 'var(--success)';
-                      return `
-                        <tr>
-                          <td><strong>${escapeHtml(req.method)}</strong></td>
-                          <td style="font-family: monospace; color: #444;">${escapeHtml(req.path)}</td>
-                          <td><span class="status-badge" style="background: ${color}">${escapeHtml(String(req.statusCode))}</span></td>
-                          <td style="color: #888;">${escapeHtml(req.timestamp)}</td>
-                          <td style="color: #888;">${req.duration}ms</td>
-                        </tr>
-                      `;
-                    }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #999;">Waiting for requests...</td></tr>'}
-                  </tbody>
-                </table>
-              </section>
- 
-              <section>
-                <h2>🔐 Environment</h2>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                  ${Object.keys(process.env).filter(k => {
-                    const isCustom = customEnvKeys.has(k);
-                    const isImportant = ['PORT', 'NODE_ENV'].includes(k);
-                    const isSystem = /^(ALLUSERSPROFILE|APPDATA|COMPUTERNAME|ComSpec|Common|DriverData|HOMEDRIVE|HOMEPATH|LOCALAPPDATA|LOGONSERVER|NUMBER_OF_PROCESSORS|OS|Path|PATHEXT|PROCESSOR|Program|PSModulePath|PUBLIC|System|TEMP|TMP|USER|windir|ZES_|VSCODE_|ANTIGRAVITY_)/i.test(k);
-                    return (isCustom || isImportant) && !isSystem;
-                  }).map(k => {
-                    const val = process.env[k] || '';
-                    const masked = val.length > 4 ? '****' + val.slice(-4) : '****';
-                    return `
-                    <div style="background: #f9f9f9; border: 1px solid #eee; padding: 10px 15px; border-radius: 8px;">
-                      <div style="font-size: 0.7rem; color: #999; margin-bottom: 4px; font-weight: bold;">${escapeHtml(k)}</div>
-                      <div class="env-item">${escapeHtml(masked)}</div>
-                    </div>
-                  `}).join('') || '<div style="color:#999">No custom variables loaded</div>'}
-                </div>
-              </section>
-            </main>
- 
-            <script>
-              async function testRoute(path) {
-                const method = document.getElementById('method-' + path).value;
-                const bodyStr = document.getElementById('body-' + path).value;
-                const resDiv = document.getElementById('res-' + path);
-                const statusDiv = document.getElementById('status-' + path);
-                const pre = resDiv.querySelector('pre');
-                
-                resDiv.style.display = 'block';
-                pre.innerText = 'Sending request...';
-                statusDiv.innerText = '';
-                
-                try {
-                  const options = { method, headers: {} };
-                  if (['POST', 'PUT', 'PATCH'].includes(method) && bodyStr) {
-                    options.headers['Content-Type'] = 'application/json';
-                    options.body = bodyStr;
-                  }
-                  
-                  const start = Date.now();
-                  const response = await fetch(path, options);
-                  const duration = Date.now() - start;
-                  const data = await response.json().catch(() => null);
-                  
-                  statusDiv.innerText = response.status + ' (' + duration + 'ms)';
-                  statusDiv.style.color = response.status >= 400 ? '#ff4d4f' : '#52c41a';
-                  pre.innerText = JSON.stringify(data, null, 2) || 'No response body';
-                } catch (err) {
-                  statusDiv.innerText = 'ERROR';
-                  statusDiv.style.color = '#ff4d4f';
-                  pre.innerText = err.message;
-                }
-              }
- 
-              // Soft refresh every 5 seconds
-              let refreshTimeout = setTimeout(() => {
-                window.location.reload();
-              }, 5000);
- 
-              // Pause refresh if user is interacting with playground
-              document.addEventListener('mousedown', () => {
-                clearTimeout(refreshTimeout);
-                refreshTimeout = setTimeout(() => window.location.reload(), 15000);
-              });
-            </script>
-          </body>
-        </html>
+              <div class="input-group">
+                <select id="method-${r.path}">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+                <input type="text" id="body-${r.path}" value='${sampleBody}' placeholder='{"key": "value"}'>
+                <button onclick="testRoute('${r.path}')">SEND</button>
+              </div>
+              <div id="res-${r.path}" class="response-area" style="display: none;">
+                <div id="status-${r.path}" class="status-tag"></div>
+                <pre></pre>
+              </div>
+            </div>
+            `
+          }).join('') : '<div style="color:var(--text-light);text-align:center;padding:2rem;">No routes found in /api</div>'}
+        </div>
+      </section>
+
+      <section>
+        <h2>⚙️ Framework Features</h2>
+        <div class="feature-list">
+          ${Object.entries(config.features).map(([k, v]) => `
+            <div class="feature-item" style="opacity: ${v ? '1' : '0.5'}">
+              <span style="font-weight: 500;">${k}</span>
+              <span>${v ? '✅' : '❌'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </section>
+    </div>
+
+    <section style="margin-bottom: 2rem;">
+      <h2>📡 Recent Activity</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>METHOD</th>
+              <th>PATH</th>
+              <th>STATUS</th>
+              <th>TIME</th>
+              <th>LATENCY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recentRequests.map(req => {
+              const color = req.statusCode >= 500 ? 'var(--error)' : req.statusCode >= 400 ? 'var(--warning)' : 'var(--success)';
+              return `
+                <tr>
+                  <td><strong style="color: ${color};">${escapeHtml(req.method)}</strong></td>
+                  <td style="font-family: 'SF Mono', monospace;">${escapeHtml(req.path)}</td>
+                  <td><span class="status-pill" style="background: ${color}">${escapeHtml(String(req.statusCode))}</span></td>
+                  <td style="color: var(--text-light);">${escapeHtml(req.timestamp)}</td>
+                  <td style="color: var(--text-light);">${req.duration}ms</td>
+                </tr>
+              `;
+            }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">Listening for incoming requests...</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>🔐 Environment Variables</h2>
+      <div class="env-grid">
+        ${Object.keys(process.env).filter(k => {
+          const isCustom = customEnvKeys.has(k);
+          const isImportant = ['PORT', 'NODE_ENV'].includes(k);
+          const isSystem = /^(ALLUSERSPROFILE|APPDATA|COMPUTERNAME|ComSpec|Common|DriverData|HOMEDRIVE|HOMEPATH|LOCALAPPDATA|LOGONSERVER|NUMBER_OF_PROCESSORS|OS|Path|PATHEXT|PROCESSOR|Program|PSModulePath|PUBLIC|System|TEMP|TMP|USER|windir|ZES_|VSCODE_|ANTIGRAVITY_)/i.test(k);
+          return (isCustom || isImportant) && !isSystem;
+        }).map(k => {
+          const val = process.env[k] || '';
+          const masked = val.length > 4 ? '****' + val.slice(-4) : '****';
+          return `
+          <div class="env-card">
+            <div class="env-key">${escapeHtml(k)}</div>
+            <div class="env-val">${escapeHtml(masked)}</div>
+          </div>
+          `
+        }).join('') || '<div style="color:var(--text-light); grid-column: 1/-1; text-align:center;">No custom variables loaded</div>'}
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function testRoute(path) {
+      const method = document.getElementById('method-' + path).value;
+      const bodyStr = document.getElementById('body-' + path).value;
+      const resDiv = document.getElementById('res-' + path);
+      const statusDiv = document.getElementById('status-' + path);
+      const pre = resDiv.querySelector('pre');
+      
+      resDiv.style.display = 'block';
+      pre.innerText = 'Sending request...';
+      statusDiv.innerText = '';
+      
+      try {
+        const options = { method, headers: {} };
+        if (['POST', 'PUT', 'PATCH'].includes(method) && bodyStr) {
+          options.headers['Content-Type'] = 'application/json';
+          options.body = bodyStr;
+        }
+        
+        const start = Date.now();
+        const response = await fetch(path, options);
+        const duration = Date.now() - start;
+        
+        const contentType = response.headers.get("content-type");
+        let data = null;
+        if (contentType && contentType.includes("application/json")) {
+           data = await response.json().catch(() => null);
+        } else {
+           data = await response.text();
+        }
+        
+        statusDiv.innerText = response.status + ' (' + duration + 'ms)';
+        statusDiv.style.background = response.status >= 400 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+        statusDiv.style.color = response.status >= 400 ? '#ef4444' : '#10b981';
+        
+        if (typeof data === 'object') {
+          pre.innerText = JSON.stringify(data, null, 2) || 'No response body';
+        } else {
+          pre.innerText = data || 'No response body';
+        }
+      } catch (err) {
+        statusDiv.innerText = 'ERROR';
+        statusDiv.style.background = 'rgba(239, 68, 68, 0.2)';
+        statusDiv.style.color = '#ef4444';
+        pre.innerText = err.message;
+      }
+    }
+
+    let refreshTimeout = setTimeout(() => {
+      window.location.reload();
+    }, 5000);
+
+    document.addEventListener('mousedown', () => {
+      clearTimeout(refreshTimeout);
+      refreshTimeout = setTimeout(() => window.location.reload(), 15000);
+    });
+  </script>
+</body>
+</html>
+
       `);
     }
 
