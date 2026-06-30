@@ -1,6 +1,6 @@
 {
   "name": "create-zerra-app",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "CLI scaffolding tool for Zerra — the CLI-first Node.js backend framework.",
   "main": "index.js",
   "bin": {
