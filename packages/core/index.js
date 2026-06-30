@@ -28,6 +28,13 @@ function startServer(port = 3000) {
     }
   }
 
+  let config = {
+    features: {},
+    cors: { origin: '*', methods: 'GET,POST,PUT,DELETE,OPTIONS' },
+    routePrefix: '',
+    plugins: []
+  };
+
   if (userConfig.features) config.features = { ...config.features, ...userConfig.features };
   if (userConfig.cors) config.cors = { ...config.cors, ...userConfig.cors };
   if (userConfig.routePrefix !== undefined) config.routePrefix = userConfig.routePrefix;
