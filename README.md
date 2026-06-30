@@ -25,9 +25,10 @@
 
 Zerra is designed to be the backend equivalent of Next.js—offering the same "it just works" experience for your APIs.
 
-- **🚀 Performance**: Sub-50ms cold starts. The fastest in the Node.js ecosystem.
+- **🚀 Performance**: Sub-50ms cold starts. The fastest in the Node.js ecosystem, backed by a production `O(K)` Radix Trie routing engine.
 - **📁 File-based Routing**: No more `router.get()` spaghetti. Your folder structure *is* your API.
-- **🛡️ Type-Safe**: Zero-config TypeScript support with automatic type generation.
+- **🛡️ Type-Safe & Validated**: Native Zod support and zero-config TypeScript.
+- **🔌 Plugin Ecosystem**: Hook into every lifecycle stage via `onInit`, `onRequest`, and `onResponse`.
 - **💻 Dev Console**: A built-in terminal and playground at `/__zerra` to test and debug in real-time.
 - **📦 Zero Config**: Start building immediately. Everything you need is built-in, not bolted on.
 
@@ -88,12 +89,32 @@ export default async (req, res, next) => {
 };
 ```
 
-### 4. HTTP Method Exports & WebSockets
-Define methods explicitly for cleaner code, or use `_ws.js` for instant WebSocket support.
+### 4. HTTP Method Exports & Declarative Responses
+Define methods explicitly and use Zerra's intuitive Response API (`json`, `html`, `text`, `redirect`).
 
 ```javascript
-export const GET = (req, res) => res.json({ message: "Hello!" });
-export const POST = (req, res) => res.json({ body: req.body });
+import { json } from "zerra";
+
+export const GET = (ctx) => json({ message: "Hello!" });
+export const POST = (ctx) => json({ body: ctx.body });
+```
+
+### 5. Plugin Ecosystem & Configuration (`v1.3.0`)
+Configure Zerra using modern JavaScript configuration and tap into deep lifecycle hooks.
+
+```javascript
+// zerra.config.js
+import { defineConfig, definePlugin } from "zerra";
+
+const myPlugin = definePlugin({
+  name: "auth-logger",
+  onRequest: async (req, res) => console.log("Request started!"),
+});
+
+export default defineConfig({
+  features: { guards: true, cron: true },
+  plugins: [myPlugin]
+});
 ```
 
 ### 5. The CLI Toolkit
