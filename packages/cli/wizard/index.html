@@ -1,121 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="color-scheme:dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zerra — Setup Wizard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a27;--border:#2a2a3d;
-  --text:#e4e4ef;--text2:#8888a4;--accent:#6c5ce7;--accent2:#a29bfe;
-  --green:#00d2a0;--red:#ff6b6b;--orange:#ffa94d;--blue:#74b9ff;
+  --bg:#000000;
+  --fg:#fafafa;
+  --border:rgba(255,255,255,0.08);
+  --surface:rgba(255,255,255,0.02);
+  --surface-hover:rgba(255,255,255,0.04);
+  --zinc-400:#a1a1aa;
+  --zinc-500:#71717a;
+  --zinc-600:#52525b;
+  --zinc-800:#27272a;
+  --zinc-900:#18181b;
 }
-html{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);scroll-behavior:smooth}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
 
-/* Background animated gradient */
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(108,92,231,.15),transparent),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(0,210,160,.08),transparent);pointer-events:none;z-index:0}
+html{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--fg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  letter-spacing:-0.01em;
+}
 
-.wizard{position:relative;z-index:1;width:100%;max-width:820px;padding:40px 24px 60px}
+body{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-x:hidden;
+  background-image:radial-gradient(circle at 50% 50%,rgba(120,120,120,0.05) 1px,transparent 1px);
+  background-size:32px 32px;
+  background-attachment:fixed;
+}
 
-/* Header */
-.header{text-align:center;margin-bottom:48px;animation:fadeUp .6s ease}
-.logo{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
-.subtitle{color:var(--text2);margin-top:8px;font-size:15px;font-weight:400}
-.project-badge{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:8px 18px;background:var(--surface);border:1px solid var(--border);border-radius:99px;font-size:13px;color:var(--accent2);font-weight:500}
-.project-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+::selection{background:rgba(255,255,255,0.15);color:#fff}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
 
-/* Steps */
-.steps{display:flex;justify-content:center;gap:6px;margin-bottom:40px;animation:fadeUp .6s ease .1s both}
-.step-dot{width:32px;height:4px;border-radius:4px;background:var(--border);transition:all .4s ease}
-.step-dot.active{background:var(--accent);width:48px}
-.step-dot.done{background:var(--green)}
+/* Particle canvas */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0}
 
-/* Panels */
+/* Main wizard */
+.wizard{position:relative;z-index:1;width:100%;max-width:860px;padding:48px 24px 80px}
+
+/* ─── Navbar ─── */
+.nav-bar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.nav-inner{
+  max-width:1440px;margin:0 auto;padding:0 24px;
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-box{
+  width:28px;height:28px;background:var(--fg);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 15px rgba(120,120,120,0.2);
+}
+.nav-logo-box span{color:var(--bg);font-weight:900;font-size:15px;letter-spacing:-0.05em}
+.nav-logo-text{font-weight:700;font-size:15px;letter-spacing:-0.02em;color:var(--fg)}
+.nav-badge{
+  padding:4px 12px;border-radius:99px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:12px;color:var(--zinc-400);font-weight:500;
+}
+
+/* ─── Header ─── */
+.header{text-align:center;margin:80px 0 48px;animation:fadeUp .8s ease}
+.header h1{
+  font-size:clamp(36px,6vw,64px);font-weight:800;
+  letter-spacing:-0.03em;line-height:1.1;margin-bottom:12px;
+}
+.header p{color:var(--zinc-400);font-size:16px;font-weight:400;max-width:480px;margin:0 auto 20px;line-height:1.6}
+.project-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;font-size:13px;color:var(--zinc-400);font-weight:500;
+  font-family:'Courier New',monospace;
+}
+.project-badge .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+
+/* ─── Step indicator ─── */
+.steps{display:flex;justify-content:center;gap:6px;margin-bottom:48px;animation:fadeUp .8s ease .1s both}
+.step-dot{width:32px;height:3px;border-radius:3px;background:var(--border);transition:all .4s ease}
+.step-dot.active{background:var(--fg);width:48px}
+.step-dot.done{background:rgba(255,255,255,0.25)}
+
+/* ─── Panels ─── */
 .panel{display:none;animation:fadeUp .4s ease}
 .panel.active{display:block}
 
-/* Section titles */
-.section-title{font-size:22px;font-weight:700;margin-bottom:6px}
-.section-desc{font-size:14px;color:var(--text2);margin-bottom:28px}
+.section-title{font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px}
+.section-desc{font-size:14px;color:var(--zinc-500);margin-bottom:32px;line-height:1.6}
 
-/* Cards grid */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.card{position:relative;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:all .25s ease;user-select:none}
-.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,92,231,.1)}
-.card.selected{border-color:var(--accent);background:rgba(108,92,231,.08)}
-.card.selected::after{content:'✓';position:absolute;top:12px;right:14px;width:22px;height:22px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
-.card-icon{font-size:26px;margin-bottom:10px}
-.card-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.card-desc{font-size:12px;color:var(--text2);line-height:1.5}
+/* ─── Cards (rounded-[40px] like the website) ─── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{
+  position:relative;padding:28px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:40px;cursor:pointer;
+  transition:all .5s ease;user-select:none;
+}
+.card:hover{background:var(--surface-hover);border-color:rgba(255,255,255,0.12)}
+.card.selected{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.05)}
+.card.selected::after{
+  content:'✓';position:absolute;top:16px;right:20px;
+  width:24px;height:24px;background:var(--fg);color:var(--bg);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;
+}
+.card-icon{font-size:28px;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:4px;letter-spacing:-0.02em}
+.card-desc{font-size:12px;color:var(--zinc-500);line-height:1.5}
 
-/* Feature toggles */
-.features-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.feature{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s ease;user-select:none}
-.feature:hover{border-color:var(--accent)}
-.feature.on{border-color:var(--green);background:rgba(0,210,160,.05)}
-.feature .toggle{width:38px;height:20px;border-radius:20px;background:var(--border);position:relative;transition:all .25s ease;flex-shrink:0}
-.feature.on .toggle{background:var(--green)}
-.feature .toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:all .25s ease}
-.feature.on .toggle::after{left:21px}
-.feature-label{font-size:13px;font-weight:500}
-.feature-sub{font-size:11px;color:var(--text2)}
+/* ─── Feature toggles ─── */
+.features-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.feature{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;
+  cursor:pointer;transition:all .3s ease;user-select:none;
+}
+.feature:hover{background:var(--surface-hover);border-color:rgba(255,255,255,0.12)}
+.feature.on{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)}
+.feature .toggle{
+  width:36px;height:20px;border-radius:20px;
+  background:var(--zinc-800);position:relative;
+  transition:all .3s ease;flex-shrink:0;
+}
+.feature.on .toggle{background:var(--fg)}
+.feature .toggle::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--bg);transition:all .25s ease;
+}
+.feature.on .toggle::after{left:19px;background:var(--bg)}
+.feature-label{font-size:13px;font-weight:600;letter-spacing:-0.01em}
+.feature-sub{font-size:11px;color:var(--zinc-500)}
 
-/* Language toggle */
-.lang-toggle{display:flex;gap:10px;margin-bottom:28px}
-.lang-btn{flex:1;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all .2s ease;font-size:14px;font-weight:600;color:var(--text)}
-.lang-btn:hover{border-color:var(--accent)}
-.lang-btn.selected{border-color:var(--accent);background:rgba(108,92,231,.08)}
+/* ─── Language toggle ─── */
+.lang-toggle{display:flex;gap:12px;margin-bottom:32px}
+.lang-btn{
+  flex:1;padding:18px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;
+  text-align:center;cursor:pointer;transition:all .3s ease;
+  font-size:14px;font-weight:600;color:var(--fg);letter-spacing:-0.01em;
+}
+.lang-btn:hover{background:var(--surface-hover);border-color:rgba(255,255,255,0.12)}
+.lang-btn.selected{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.05)}
 
-/* Navigation */
-.nav{display:flex;justify-content:space-between;margin-top:36px;gap:12px}
-.btn{padding:12px 32px;border-radius:10px;border:none;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .25s ease}
-.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
-.btn-secondary:hover{border-color:var(--accent)}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;box-shadow:0 4px 20px rgba(108,92,231,.3)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(108,92,231,.4)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* ─── Bottom nav ─── */
+.nav-bottom{display:flex;justify-content:space-between;margin-top:40px;gap:12px}
+.btn{
+  padding:12px 28px;border-radius:12px;border:none;
+  font-family:inherit;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .3s ease;letter-spacing:-0.01em;
+}
+.btn-back{background:transparent;color:var(--zinc-500);border:1px solid var(--border)}
+.btn-back:hover{border-color:rgba(255,255,255,0.15);color:var(--fg)}
+.btn-next{
+  background:var(--fg);color:var(--bg);
+  box-shadow:0 0 20px rgba(120,120,120,0.1);
+}
+.btn-next:hover{opacity:.9;box-shadow:0 0 30px rgba(120,120,120,0.15)}
 
-/* Summary panel */
-.summary-grid{display:grid;gap:10px}
-.summary-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
-.summary-label{font-size:13px;color:var(--text2)}
-.summary-value{font-size:13px;font-weight:600;color:var(--accent2)}
+/* ─── Summary ─── */
+.summary-grid{display:grid;gap:12px}
+.summary-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 24px;background:var(--surface);
+  border-radius:20px;border:1px solid var(--border);
+}
+.summary-label{font-size:13px;color:var(--zinc-500);font-weight:500}
+.summary-value{font-size:13px;font-weight:600;color:var(--fg)}
 .features-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:60%}
-.tag{padding:3px 10px;background:rgba(108,92,231,.12);border-radius:6px;font-size:11px;color:var(--accent2);font-weight:500}
+.tag{
+  padding:4px 10px;background:rgba(255,255,255,0.06);
+  border:1px solid var(--border);border-radius:8px;
+  font-size:11px;color:var(--zinc-400);font-weight:500;
+}
 
-/* Progress overlay */
-.overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.92);backdrop-filter:blur(10px);z-index:100;flex-direction:column;align-items:center;justify-content:center}
+/* ─── Progress overlay ─── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);z-index:100;flex-direction:column;align-items:center;justify-content:center}
 .overlay.active{display:flex}
-.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:24px}
-.overlay-text{font-size:16px;font-weight:600;margin-bottom:8px}
-.overlay-sub{font-size:13px;color:var(--text2)}
+.spinner{width:40px;height:40px;border:2px solid var(--border);border-top-color:var(--fg);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:24px}
+.overlay-text{font-size:16px;font-weight:600;letter-spacing:-0.02em}
+.overlay-sub{font-size:13px;color:var(--zinc-500);margin-top:6px}
 
-/* Done screen */
-.done-screen{text-align:center}
-.done-icon{font-size:64px;margin-bottom:16px;animation:scaleIn .5s ease}
-.done-title{font-size:28px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--green),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.done-sub{color:var(--text2);font-size:14px;margin-bottom:28px}
-.code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:left;font-family:'Fira Code',monospace,Consolas;font-size:13px;line-height:2;color:var(--text2)}
-.code-block .cmd{color:var(--green)}
+/* ─── Done screen ─── */
+.done-screen{text-align:center;padding-top:120px}
+.done-icon{font-size:56px;margin-bottom:20px;animation:scaleIn .5s ease}
+.done-title{font-size:36px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px}
+.done-sub{color:var(--zinc-500);font-size:14px;margin-bottom:32px}
+.code-block{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px 28px;text-align:left;
+  font-family:'Courier New',monospace;font-size:13px;
+  line-height:2;color:var(--zinc-500);max-width:400px;margin:0 auto;
+}
+.code-block .cmd{color:var(--fg)}
 
-/* Animations */
+/* ─── Animations ─── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes scaleIn{from{transform:scale(0)}to{transform:scale(1)}}
-@media(max-width:600px){.features-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+
+@media(max-width:640px){
+  .features-grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+  .features-tags{max-width:100%;justify-content:flex-start}
+}
 </style>
 </head>
 <body>
 
-<div class="wizard">
+<!-- Animated particles background -->
+<canvas id="particles"></canvas>
+
+<!-- Top navbar -->
+<div class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <div class="nav-logo-box"><span>Z</span></div>
+      <span class="nav-logo-text">Zerra</span>
+    </div>
+    <span class="nav-badge">Setup Wizard</span>
+  </div>
+</div>
+
+<div class="wizard" id="wizardMain">
   <div class="header">
-    <div class="logo">Zerra</div>
-    <div class="subtitle">Configure your new backend project visually.</div>
-    <div class="project-badge"><span class="dot"></span> <span id="projectNameDisplay">my-api</span></div>
+    <h1>Configure your project.</h1>
+    <p>Select your stack, toggle features, and build your Zerra app — all from the browser.</p>
+    <div class="project-badge"><span class="dot"></span><span id="projectNameDisplay">my-api</span></div>
   </div>
 
   <div class="steps" id="stepsBar">
@@ -127,8 +257,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- Step 1: Database -->
   <div class="panel active" id="step-0">
-    <div class="section-title">Choose your Database</div>
-    <div class="section-desc">Select the database that powers your API. You can always change this later.</div>
+    <div class="section-title">Database</div>
+    <div class="section-desc">Choose the data layer for your API. This can be changed later.</div>
     <div class="cards" id="dbCards">
       <div class="card selected" data-value="js-base" onclick="selectCard('db',this)">
         <div class="card-icon">⚡</div>
@@ -161,10 +291,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <!-- Step 2: Language + Auth -->
   <div class="panel" id="step-1">
     <div class="section-title">Language & Auth</div>
-    <div class="section-desc">Pick your language and whether to include a starter auth module.</div>
+    <div class="section-desc">Pick your language and whether to include a starter authentication module.</div>
     <div class="lang-toggle">
-      <div class="lang-btn selected" data-value="js" onclick="selectLang(this)">☕ JavaScript</div>
-      <div class="lang-btn" data-value="ts" onclick="selectLang(this)">🔷 TypeScript</div>
+      <div class="lang-btn selected" data-value="js" onclick="selectLang(this)">JavaScript</div>
+      <div class="lang-btn" data-value="ts" onclick="selectLang(this)">TypeScript</div>
     </div>
     <div class="cards">
       <div class="card selected" data-value="yes" onclick="selectCard('auth',this)">
@@ -182,21 +312,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- Step 3: Features -->
   <div class="panel" id="step-2">
-    <div class="section-title">Toggle Features</div>
-    <div class="section-desc">Enable or disable framework features. Green means enabled.</div>
+    <div class="section-title">Features</div>
+    <div class="section-desc">Toggle the framework capabilities you need. White means enabled.</div>
     <div class="features-grid" id="featuresGrid"></div>
   </div>
 
   <!-- Step 4: Summary -->
   <div class="panel" id="step-3">
-    <div class="section-title">Review & Create</div>
-    <div class="section-desc">Make sure everything looks good, then hit the button.</div>
+    <div class="section-title">Review & Build</div>
+    <div class="section-desc">Confirm your configuration, then create the project.</div>
     <div class="summary-grid" id="summaryGrid"></div>
   </div>
 
-  <div class="nav">
-    <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
-    <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next →</button>
+  <div class="nav-bottom">
+    <button class="btn btn-back" id="prevBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
+    <button class="btn btn-next" id="nextBtn" onclick="nextStep()">Continue</button>
   </div>
 </div>
 
@@ -207,11 +337,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="overlay-sub" id="overlaySub">This only takes a moment.</div>
 </div>
 
-<!-- Done screen (replaces wizard) -->
+<!-- Done screen -->
 <div class="wizard" id="doneScreen" style="display:none">
   <div class="done-screen">
     <div class="done-icon">🚀</div>
-    <div class="done-title">Your Zerra App is Ready!</div>
+    <div class="done-title">You're all set.</div>
     <div class="done-sub">Head back to your terminal and start building.</div>
     <div class="code-block">
       <span class="cmd">cd <span id="doneName">my-api</span></span><br>
@@ -221,6 +351,49 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <script>
+// ─── Particle system (matching zerra.dev) ───
+(function(){
+  const c = document.getElementById('particles');
+  const ctx = c.getContext('2d');
+  let particles = [];
+
+  function init(){
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    particles = [];
+    const num = Math.floor((c.width * c.height) / 6000);
+    for(let i=0;i<num;i++){
+      particles.push({
+        x:Math.random()*c.width, y:Math.random()*c.height,
+        size:Math.random()*1.8+0.4, speedY:Math.random()*0.8+0.4,
+        opacity:Math.random()*0.2+0.1, pulseSpeed:Math.random()*0.02+0.005,
+        pulse:Math.random()*Math.PI*2
+      });
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    ctx.fillStyle='#ffffff';
+    particles.forEach(p=>{
+      p.pulse+=p.pulseSpeed;
+      const op = p.opacity + Math.sin(p.pulse)*0.4;
+      ctx.globalAlpha = Math.max(0.05,Math.min(0.4,op));
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fill();
+      p.y -= p.speedY;
+      if(p.y<-10){p.y=c.height+10;p.x=Math.random()*c.width;}
+    });
+    requestAnimationFrame(draw);
+  }
+
+  let rt;
+  window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(init,100);});
+  init();
+  draw();
+})();
+
 // ─── State ───
 const FEATURES = [
   {key:'logging',label:'Request Logging',sub:'Beautiful colored logs',on:true},
@@ -238,26 +411,15 @@ const FEATURES = [
   {key:'transforms',label:'Transformers',sub:'Response _transform.js',on:true},
 ];
 
-let state = {
-  step: 0,
-  database: 'js-base',
-  language: 'js',
-  includeAuth: true,
-  features: {},
-  installDeps: true,
-  initGit: true,
-};
+let state = { step:0, database:'js-base', language:'js', includeAuth:true, features:{} };
 
-// Read project name from query string
 const params = new URLSearchParams(window.location.search);
 const projectName = params.get('name') || 'my-api';
 document.getElementById('projectNameDisplay').textContent = projectName;
 document.getElementById('doneName').textContent = projectName;
-
-// Init features
 FEATURES.forEach(f => state.features[f.key] = f.on);
 
-// ─── Render features grid ───
+// ─── Render features ───
 function renderFeatures(){
   const grid = document.getElementById('featuresGrid');
   grid.innerHTML = '';
@@ -273,8 +435,7 @@ renderFeatures();
 
 // ─── Card selection ───
 function selectCard(type, el){
-  const parent = el.parentElement;
-  parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  el.parentElement.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   if(type==='db') state.database = el.dataset.value;
   if(type==='auth') state.includeAuth = el.dataset.value === 'yes';
@@ -286,7 +447,7 @@ function selectLang(el){
   state.language = el.dataset.value;
 }
 
-// ─── Steps navigation ───
+// ─── Navigation ───
 function updateSteps(){
   const dots = document.querySelectorAll('.step-dot');
   dots.forEach((d,i) => {
@@ -295,33 +456,31 @@ function updateSteps(){
     if(i === state.step) d.classList.add('active');
   });
   document.getElementById('prevBtn').style.visibility = state.step === 0 ? 'hidden' : 'visible';
-  const isLast = state.step === 3;
-  document.getElementById('nextBtn').textContent = isLast ? '🚀 Build My Zerra App' : 'Next →';
+  document.getElementById('nextBtn').textContent = state.step === 3 ? 'Build Project →' : 'Continue';
 }
 
 function showPanel(idx){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('step-'+idx);
-  if(panel){ panel.classList.add('active'); panel.style.animation='none'; panel.offsetHeight; panel.style.animation='fadeUp .4s ease'; }
+  if(panel){panel.classList.add('active');panel.style.animation='none';panel.offsetHeight;panel.style.animation='fadeUp .4s ease';}
 }
 
 function renderSummary(){
-  const dbNames = {'js-base':'None (Simple)','js-sql':'SQL','js-mongo':'MongoDB','js-supabase':'Supabase','js-firebase':'Firebase'};
-  const enabledFeatures = Object.entries(state.features).filter(([,v])=>v).map(([k])=>{
-    const f = FEATURES.find(x=>x.key===k); return f ? f.label : k;
+  const dbNames = {'js-base':'None','js-sql':'SQL','js-mongo':'MongoDB','js-supabase':'Supabase','js-firebase':'Firebase'};
+  const enabled = Object.entries(state.features).filter(([,v])=>v).map(([k])=>{
+    const f = FEATURES.find(x=>x.key===k); return f?f.label:k;
   });
-  const grid = document.getElementById('summaryGrid');
-  grid.innerHTML = `
+  document.getElementById('summaryGrid').innerHTML = `
     <div class="summary-row"><span class="summary-label">Project</span><span class="summary-value">${projectName}</span></div>
-    <div class="summary-row"><span class="summary-label">Database</span><span class="summary-value">${dbNames[state.database]||state.database}</span></div>
+    <div class="summary-row"><span class="summary-label">Database</span><span class="summary-value">${dbNames[state.database]}</span></div>
     <div class="summary-row"><span class="summary-label">Language</span><span class="summary-value">${state.language==='ts'?'TypeScript':'JavaScript'}</span></div>
     <div class="summary-row"><span class="summary-label">Auth Starter</span><span class="summary-value">${state.includeAuth?'Included':'Skipped'}</span></div>
-    <div class="summary-row"><span class="summary-label">Features</span><div class="features-tags">${enabledFeatures.map(f=>`<span class="tag">${f}</span>`).join('')}</div></div>
+    <div class="summary-row"><span class="summary-label">Features</span><div class="features-tags">${enabled.map(f=>`<span class="tag">${f}</span>`).join('')}</div></div>
   `;
 }
 
 function nextStep(){
-  if(state.step === 3){ submitConfig(); return; }
+  if(state.step === 3){submitConfig();return;}
   state.step++;
   if(state.step === 3) renderSummary();
   showPanel(state.step);
@@ -335,38 +494,24 @@ function prevStep(){
   updateSteps();
 }
 
-// ─── Submit to local CLI server ───
+// ─── Submit ───
 async function submitConfig(){
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('active');
-
-  const featuresList = Object.entries(state.features).filter(([,v])=>v).map(([k])=>k);
-
+  document.getElementById('overlay').classList.add('active');
   const payload = {
-    database: state.database,
-    language: state.language,
-    includeAuth: state.includeAuth,
-    features: featuresList,
-    installDeps: state.installDeps,
-    initGit: state.initGit,
+    database:state.database, language:state.language,
+    includeAuth:state.includeAuth,
+    features:Object.entries(state.features).filter(([,v])=>v).map(([k])=>k),
+    installDeps:true, initGit:true,
   };
-
-  try {
-    const res = await fetch('/api/create', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload),
-    });
-
+  try{
+    const res = await fetch('/api/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error('Server error');
-
-    // Show done screen
-    overlay.classList.remove('active');
-    document.querySelector('.wizard').style.display = 'none';
-    document.getElementById('doneScreen').style.display = 'block';
-  } catch(e){
-    document.getElementById('overlayText').textContent = '⚠️ Something went wrong';
-    document.getElementById('overlaySub').textContent = 'Check your terminal for details.';
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('wizardMain').style.display='none';
+    document.getElementById('doneScreen').style.display='block';
+  }catch(e){
+    document.getElementById('overlayText').textContent='Something went wrong.';
+    document.getElementById('overlaySub').textContent='Check your terminal for details.';
   }
 }
 </script>
