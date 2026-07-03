@@ -61,6 +61,98 @@ program
     console.log(`✅ Generated ${type} at ${targetPath}`);
   });
 
+// ─── Add command (Database / Auth injection) ───
+program
+  .command("add <feature>")
+  .description("Add or switch a module (database, auth) in an existing project")
+  .action(async (feature) => {
+    const projectRoot = findUp("zerra.config.json") ? path.dirname(findUp("zerra.config.json")) : (findUp("package.json") ? path.dirname(findUp("package.json")) : process.cwd());
+    const isTs = !!findUp("tsconfig.json", projectRoot);
+
+    if (feature === "database") {
+      const inquirer = require("inquirer");
+      const { dbType } = await inquirer.prompt([
+        { type: "list", name: "dbType", message: "Select the database to add/switch to:", choices: [
+          { name: "SQL (Postgres/MySQL)", value: "js-sql" },
+          { name: "MongoDB", value: "js-mongo" },
+          { name: "Supabase", value: "js-supabase" },
+          { name: "Firebase", value: "js-firebase" }
+        ]}
+      ]);
+
+      const dbTemplatePath = path.join(__dirname, "templates", dbType);
+      if (!fs.existsSync(dbTemplatePath)) {
+        console.error("❌ Template not found.");
+        return;
+      }
+
+      console.log(`\n📦 Injecting ${dbType} integration...`);
+      await fs.copy(dbTemplatePath, projectRoot, {
+        overwrite: true,
+        filter: (src) => !src.endsWith("package.json"),
+      });
+
+      const dbPkgPath = path.join(dbTemplatePath, "package.json");
+      const targetPkgPath = path.join(projectRoot, "package.json");
+      if (fs.existsSync(dbPkgPath) && fs.existsSync(targetPkgPath)) {
+        const basePkg = await fs.readJson(targetPkgPath);
+        const dbPkg = await fs.readJson(dbPkgPath);
+        basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(dbPkg.dependencies || {}) };
+        await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
+      }
+
+      // Convert newly added files to TS if project is TS
+      if (isTs) {
+        const servicesDir = path.join(projectRoot, "services");
+        if (fs.existsSync(servicesDir)) {
+          const files = await fs.readdir(servicesDir);
+          for (const file of files) {
+            if (file.endsWith(".js")) {
+              await fs.move(path.join(servicesDir, file), path.join(servicesDir, file.replace(/\.js$/, ".ts")), { overwrite: true });
+            }
+          }
+        }
+      }
+
+      console.log(`✅ Database successfully added/updated!`);
+      console.log(`👉 Don't forget to run 'npm install' to install the new database drivers.`);
+      
+    } else if (feature === "auth") {
+      const authTemplatePath = path.join(__dirname, "templates", "js-auth");
+      console.log(`\n🔐 Injecting Auth Starter...`);
+      await fs.copy(authTemplatePath, projectRoot, { overwrite: true, filter: (src) => !src.endsWith("package.json") });
+      
+      const authPkgPath = path.join(authTemplatePath, "package.json");
+      const targetPkgPath = path.join(projectRoot, "package.json");
+      if (fs.existsSync(authPkgPath) && fs.existsSync(targetPkgPath)) {
+        const basePkg = await fs.readJson(targetPkgPath);
+        const authPkg = await fs.readJson(authPkgPath);
+        basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(authPkg.dependencies || {}) };
+        await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
+      }
+
+      if (isTs) {
+        const authApiDir = path.join(projectRoot, "api", "auth");
+        const configDir = path.join(projectRoot, "config");
+        const convertToTs = async (dir) => {
+          if (fs.existsSync(dir)) {
+            const files = await fs.readdir(dir);
+            for (const file of files) {
+              if (file.endsWith(".js")) await fs.move(path.join(dir, file), path.join(dir, file.replace(/\.js$/, ".ts")), { overwrite: true });
+            }
+          }
+        };
+        await convertToTs(authApiDir);
+        await convertToTs(configDir);
+      }
+
+      console.log(`✅ Auth starter successfully added!`);
+      console.log(`👉 Don't forget to run 'npm install' to install auth dependencies (jsonwebtoken, bcrypt).`);
+    } else {
+      console.error(`❌ Unknown feature '${feature}'. Use 'database' or 'auth'.`);
+    }
+  });
+
 // ─── Open browser helper ───
 async function openBrowser(url) {
   const { platform } = process;
