@@ -25,9 +25,12 @@
 
 Zerra is designed to be the backend equivalent of Next.js—offering the same "it just works" experience for your APIs.
 
+- **✨ Visual Setup Wizard**: Scaffold your project using our premium web-based configurator with a live file tree preview.
 - **🚀 Performance**: Sub-50ms cold starts. The fastest in the Node.js ecosystem, backed by a production `O(K)` Radix Trie routing engine.
 - **📁 File-based Routing**: No more `router.get()` spaghetti. Your folder structure *is* your API.
-- **🛡️ Type-Safe & Validated**: Native Zod support and zero-config TypeScript.
+- **🔐 Declarative Guards & Transforms**: Use `_guard.js` for role-based access control and `_transform.js` for standardized responses.
+- **🛡️ Enterprise Security**: Built-in path traversal mitigation, strict payload limits, and graceful shutdown handling.
+- **🩺 Health Monitoring**: Built-in endpoints to monitor uptime, memory usage, and system vitals.
 - **🔌 Plugin Ecosystem**: Hook into every lifecycle stage via `onInit`, `onRequest`, and `onResponse`.
 - **💻 Dev Console**: A built-in terminal and playground at `/__zerra` to test and debug in real-time.
 - **📦 Zero Config**: Start building immediately. Everything you need is built-in, not bolted on.
@@ -42,7 +45,7 @@ Get a production-ready API running in seconds:
 npx create-zerra-app@latest my-api
 ```
 
-Follow the interactive prompts to choose your database (SQL, MongoDB, Supabase, or Firebase) and advanced features.
+Launch the **visual setup wizard** in your browser to interactively select your database (SQL, MongoDB, Supabase, or Firebase), choose TypeScript or JavaScript, and toggle advanced features like Auth Starters, Cron Jobs, and Rate Limiting.
 
 ```bash
 cd my-api
@@ -117,13 +120,26 @@ export default defineConfig({
 });
 ```
 
-### 5. The CLI Toolkit
+### 6. Declarative Guards & Transforms
+Protect routes and mutate responses without modifying the actual route handler logic.
+
+```javascript
+// api/admin/_guard.js
+export default { require: "auth", roles: ["admin"] };
+
+// api/_transform.js
+export default (data, req, res) => ({ success: res.statusCode < 400, data, timestamp: Date.now() });
+```
+
+### 7. The CLI Toolkit
 Scaffold files effortlessly directly from the terminal without breaking your flow:
 
 ```bash
 npx create-zerra-app generate route users/[id]
 npx create-zerra-app generate middleware auth
 npx create-zerra-app generate job cleanup
+npx create-zerra-app generate guard admin
+npx create-zerra-app generate transform api
 ```
 
 ---
