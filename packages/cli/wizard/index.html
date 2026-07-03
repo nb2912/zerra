@@ -50,7 +50,60 @@ body{
 #particles{position:fixed;inset:0;pointer-events:none;z-index:0}
 
 /* Main wizard */
-.wizard{position:relative;z-index:1;width:100%;max-width:860px;padding:48px 24px 80px}
+.wizard{position:relative;z-index:1;width:100%;max-width:1200px;padding:48px 24px 80px}
+
+/* Two-column layout */
+.wizard-body{display:flex;gap:32px;align-items:flex-start}
+.wizard-main{flex:1;min-width:0}
+.wizard-sidebar{width:320px;flex-shrink:0;position:sticky;top:80px}
+
+/* ─── File Tree Terminal ─── */
+.file-tree-window{
+  background:rgba(255,255,255,0.02);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+.file-tree-titlebar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.file-tree-dots{display:flex;gap:6px}
+.file-tree-dots span{width:8px;height:8px;border-radius:50%}
+.file-tree-dots span:nth-child(1){background:#ff5f57}
+.file-tree-dots span:nth-child(2){background:#febc2e}
+.file-tree-dots span:nth-child(3){background:#28c840}
+.file-tree-title{
+  flex:1;text-align:center;font-size:11px;
+  color:var(--zinc-500);font-weight:500;letter-spacing:0.02em;
+}
+.file-tree-body{
+  padding:16px;font-family:'Courier New',monospace;
+  font-size:12px;line-height:1.8;min-height:200px;
+  max-height:520px;overflow-y:auto;
+}
+.file-tree-counter{
+  padding:10px 16px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--zinc-600);display:flex;
+  justify-content:space-between;align-items:center;
+}
+.file-tree-counter .count{color:var(--zinc-400);font-weight:600}
+
+/* Tree items */
+.tree-item{
+  display:flex;align-items:center;gap:6px;
+  padding:1px 0;white-space:nowrap;
+  animation:treeIn .3s ease both;
+}
+.tree-item.removing{animation:treeOut .25s ease both}
+.tree-indent{display:inline-block;width:16px;flex-shrink:0}
+.tree-icon{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.tree-name{color:var(--zinc-400)}
+.tree-name.is-dir{color:var(--fg);font-weight:600}
+.tree-name.is-new{color:#22c55e}
+.tree-connector{color:var(--zinc-800);user-select:none}
+
+@keyframes treeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes treeOut{to{opacity:0;transform:translateX(8px);height:0;padding:0;margin:0;overflow:hidden}}
 
 /* ─── Navbar ─── */
 .nav-bar{
@@ -99,8 +152,18 @@ body{
 .step-dot.done{background:rgba(255,255,255,0.25)}
 
 /* ─── Panels ─── */
-.panel{display:none;animation:fadeUp .4s ease}
-.panel.active{display:block}
+.panel-container{position:relative;overflow:hidden;min-height:400px}
+.panel{
+  position:absolute;top:0;left:0;width:100%;
+  opacity:0;pointer-events:none;transform:translateX(40px);
+  transition:all .5s cubic-bezier(0.16,1,0.3,1);
+}
+.panel.active{
+  opacity:1;pointer-events:auto;transform:translateX(0);
+  position:relative;
+}
+.panel.exiting-left{transform:translateX(-40px)}
+.panel.exiting-right{transform:translateX(40px)}
 
 .section-title{font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px}
 .section-desc{font-size:14px;color:var(--zinc-500);margin-bottom:32px;line-height:1.6}
@@ -176,6 +239,16 @@ body{
 }
 .btn-next:hover{opacity:.9;box-shadow:0 0 30px rgba(120,120,120,0.15)}
 
+.keyboard-hint{
+  font-size:11px;color:var(--zinc-500);text-align:right;
+  margin-top:8px;letter-spacing:-0.01em;
+}
+.keyboard-hint kbd{
+  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+  padding:2px 6px;border-radius:4px;font-family:inherit;font-size:10px;
+  color:var(--zinc-400);margin:0 2px;
+}
+
 /* ─── Summary ─── */
 .summary-grid{display:grid;gap:12px}
 .summary-row{
@@ -218,6 +291,10 @@ body{
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes scaleIn{from{transform:scale(0)}to{transform:scale(1)}}
 
+@media(max-width:900px){
+  .wizard-body{flex-direction:column}
+  .wizard-sidebar{width:100%;position:static}
+}
 @media(max-width:640px){
   .features-grid{grid-template-columns:1fr}
   .cards{grid-template-columns:1fr}
@@ -255,78 +332,103 @@ body{
     <div class="step-dot"></div>
   </div>
 
-  <!-- Step 1: Database -->
-  <div class="panel active" id="step-0">
-    <div class="section-title">Database</div>
-    <div class="section-desc">Choose the data layer for your API. This can be changed later.</div>
-    <div class="cards" id="dbCards">
-      <div class="card selected" data-value="js-base" onclick="selectCard('db',this)">
-        <div class="card-icon">⚡</div>
-        <div class="card-title">None (Simple API)</div>
-        <div class="card-desc">Pure Zerra — no database overhead. Perfect for microservices.</div>
+  <div class="wizard-body">
+    <div class="wizard-main">
+      <div class="panel-container">
+        <!-- Step 1: Database -->
+        <div class="panel active" id="step-0">
+        <div class="section-title">Database</div>
+        <div class="section-desc">Choose the data layer for your API. This can be changed later.</div>
+        <div class="cards" id="dbCards">
+          <div class="card selected" data-value="js-base" onclick="selectCard('db',this)">
+            <div class="card-icon">⚡</div>
+            <div class="card-title">None (Simple API)</div>
+            <div class="card-desc">Pure Zerra — no database overhead. Perfect for microservices.</div>
+          </div>
+          <div class="card" data-value="js-sql" onclick="selectCard('db',this)">
+            <div class="card-icon">🐘</div>
+            <div class="card-title">SQL (Postgres / MySQL)</div>
+            <div class="card-desc">Battle-tested relational database with full ORM support.</div>
+          </div>
+          <div class="card" data-value="js-mongo" onclick="selectCard('db',this)">
+            <div class="card-icon">🍃</div>
+            <div class="card-title">MongoDB</div>
+            <div class="card-desc">Flexible NoSQL document store for rapid prototyping.</div>
+          </div>
+          <div class="card" data-value="js-supabase" onclick="selectCard('db',this)">
+            <div class="card-icon">🟢</div>
+            <div class="card-title">Supabase</div>
+            <div class="card-desc">Open-source Firebase alternative with Postgres under the hood.</div>
+          </div>
+          <div class="card" data-value="js-firebase" onclick="selectCard('db',this)">
+            <div class="card-icon">🔥</div>
+            <div class="card-title">Firebase</div>
+            <div class="card-desc">Google's real-time NoSQL database with built-in auth.</div>
+          </div>
+        </div>
       </div>
-      <div class="card" data-value="js-sql" onclick="selectCard('db',this)">
-        <div class="card-icon">🐘</div>
-        <div class="card-title">SQL (Postgres / MySQL)</div>
-        <div class="card-desc">Battle-tested relational database with full ORM support.</div>
+
+      <!-- Step 2: Language + Auth -->
+      <div class="panel" id="step-1">
+        <div class="section-title">Language & Auth</div>
+        <div class="section-desc">Pick your language and whether to include a starter authentication module.</div>
+        <div class="lang-toggle">
+          <div class="lang-btn selected" data-value="js" onclick="selectLang(this)">JavaScript</div>
+          <div class="lang-btn" data-value="ts" onclick="selectLang(this)">TypeScript</div>
+        </div>
+        <div class="cards">
+          <div class="card selected" data-value="yes" onclick="selectCard('auth',this)">
+            <div class="card-icon">🔐</div>
+            <div class="card-title">Include Auth Starter</div>
+            <div class="card-desc">JWT + Bcrypt authentication scaffolded and ready to go.</div>
+          </div>
+          <div class="card" data-value="no" onclick="selectCard('auth',this)">
+            <div class="card-icon">🚫</div>
+            <div class="card-title">Skip Auth</div>
+            <div class="card-desc">No authentication. You can always add it later.</div>
+          </div>
+        </div>
       </div>
-      <div class="card" data-value="js-mongo" onclick="selectCard('db',this)">
-        <div class="card-icon">🍃</div>
-        <div class="card-title">MongoDB</div>
-        <div class="card-desc">Flexible NoSQL document store for rapid prototyping.</div>
+
+      <!-- Step 3: Features -->
+      <div class="panel" id="step-2">
+        <div class="section-title">Features</div>
+        <div class="section-desc">Toggle the framework capabilities you need. White means enabled.</div>
+        <div class="features-grid" id="featuresGrid"></div>
       </div>
-      <div class="card" data-value="js-supabase" onclick="selectCard('db',this)">
-        <div class="card-icon">🟢</div>
-        <div class="card-title">Supabase</div>
-        <div class="card-desc">Open-source Firebase alternative with Postgres under the hood.</div>
+
+        <!-- Step 4: Summary -->
+        <div class="panel" id="step-3">
+          <div class="section-title">Review & Build</div>
+          <div class="section-desc">Confirm your configuration, then create the project.</div>
+          <div class="summary-grid" id="summaryGrid"></div>
+        </div>
       </div>
-      <div class="card" data-value="js-firebase" onclick="selectCard('db',this)">
-        <div class="card-icon">🔥</div>
-        <div class="card-title">Firebase</div>
-        <div class="card-desc">Google's real-time NoSQL database with built-in auth.</div>
+
+      <div class="nav-bottom">
+        <button class="btn btn-back" id="prevBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end;">
+          <button class="btn btn-next" id="nextBtn" onclick="nextStep()">Continue</button>
+          <div class="keyboard-hint" id="keyboardHint">Press <kbd>→</kbd> or <kbd>Enter</kbd> to continue</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Step 2: Language + Auth -->
-  <div class="panel" id="step-1">
-    <div class="section-title">Language & Auth</div>
-    <div class="section-desc">Pick your language and whether to include a starter authentication module.</div>
-    <div class="lang-toggle">
-      <div class="lang-btn selected" data-value="js" onclick="selectLang(this)">JavaScript</div>
-      <div class="lang-btn" data-value="ts" onclick="selectLang(this)">TypeScript</div>
-    </div>
-    <div class="cards">
-      <div class="card selected" data-value="yes" onclick="selectCard('auth',this)">
-        <div class="card-icon">🔐</div>
-        <div class="card-title">Include Auth Starter</div>
-        <div class="card-desc">JWT + Bcrypt authentication scaffolded and ready to go.</div>
-      </div>
-      <div class="card" data-value="no" onclick="selectCard('auth',this)">
-        <div class="card-icon">🚫</div>
-        <div class="card-title">Skip Auth</div>
-        <div class="card-desc">No authentication. You can always add it later.</div>
+    <!-- Live File Tree Sidebar -->
+    <div class="wizard-sidebar">
+      <div class="file-tree-window">
+        <div class="file-tree-titlebar">
+          <div class="file-tree-dots"><span></span><span></span><span></span></div>
+          <div class="file-tree-title" id="treeTitle">my-api</div>
+          <div style="width:44px"></div>
+        </div>
+        <div class="file-tree-body" id="fileTreeBody"></div>
+        <div class="file-tree-counter">
+          <span>Files</span>
+          <span class="count" id="fileCount">0</span>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Step 3: Features -->
-  <div class="panel" id="step-2">
-    <div class="section-title">Features</div>
-    <div class="section-desc">Toggle the framework capabilities you need. White means enabled.</div>
-    <div class="features-grid" id="featuresGrid"></div>
-  </div>
-
-  <!-- Step 4: Summary -->
-  <div class="panel" id="step-3">
-    <div class="section-title">Review & Build</div>
-    <div class="section-desc">Confirm your configuration, then create the project.</div>
-    <div class="summary-grid" id="summaryGrid"></div>
-  </div>
-
-  <div class="nav-bottom">
-    <button class="btn btn-back" id="prevBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
-    <button class="btn btn-next" id="nextBtn" onclick="nextStep()">Continue</button>
   </div>
 </div>
 
@@ -427,7 +529,7 @@ function renderFeatures(){
     const el = document.createElement('div');
     el.className = 'feature' + (state.features[f.key] ? ' on' : '');
     el.innerHTML = `<div class="toggle"></div><div><div class="feature-label">${f.label}</div><div class="feature-sub">${f.sub}</div></div>`;
-    el.onclick = () => { state.features[f.key] = !state.features[f.key]; renderFeatures(); };
+    el.onclick = () => { state.features[f.key] = !state.features[f.key]; renderFeatures(); renderFileTree(); };
     grid.appendChild(el);
   });
 }
@@ -439,12 +541,14 @@ function selectCard(type, el){
   el.classList.add('selected');
   if(type==='db') state.database = el.dataset.value;
   if(type==='auth') state.includeAuth = el.dataset.value === 'yes';
+  renderFileTree();
 }
 
 function selectLang(el){
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   state.language = el.dataset.value;
+  renderFileTree();
 }
 
 // ─── Navigation ───
@@ -457,12 +561,22 @@ function updateSteps(){
   });
   document.getElementById('prevBtn').style.visibility = state.step === 0 ? 'hidden' : 'visible';
   document.getElementById('nextBtn').textContent = state.step === 3 ? 'Build Project →' : 'Continue';
+  document.getElementById('keyboardHint').innerHTML = state.step === 3 
+    ? 'Press <kbd>Enter</kbd> to build' 
+    : 'Press <kbd>→</kbd> or <kbd>Enter</kbd> to continue';
 }
 
-function showPanel(idx){
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById('step-'+idx);
-  if(panel){panel.classList.add('active');panel.style.animation='none';panel.offsetHeight;panel.style.animation='fadeUp .4s ease';}
+function showPanel(idx, direction = 'forward'){
+  document.querySelectorAll('.panel').forEach((p, i) => {
+    p.classList.remove('active', 'exiting-left', 'exiting-right');
+    if(i === idx){
+      p.classList.add('active');
+    } else if (i < idx) {
+      p.classList.add('exiting-left');
+    } else {
+      p.classList.add('exiting-right');
+    }
+  });
 }
 
 function renderSummary(){
@@ -483,16 +597,30 @@ function nextStep(){
   if(state.step === 3){submitConfig();return;}
   state.step++;
   if(state.step === 3) renderSummary();
-  showPanel(state.step);
+  showPanel(state.step, 'forward');
   updateSteps();
 }
 
 function prevStep(){
   if(state.step === 0) return;
   state.step--;
-  showPanel(state.step);
+  showPanel(state.step, 'backward');
   updateSteps();
 }
+
+// ─── Keyboard Navigation ───
+window.addEventListener('keydown', (e) => {
+  if (document.getElementById('overlay').classList.contains('active')) return;
+  if (document.getElementById('doneScreen').style.display === 'block') return;
+  
+  if (e.key === 'Enter') {
+    nextStep();
+  } else if (e.key === 'ArrowRight' && state.step < 3) {
+    nextStep();
+  } else if (e.key === 'ArrowLeft' && state.step > 0) {
+    prevStep();
+  }
+});
 
 // ─── Submit ───
 async function submitConfig(){
@@ -509,11 +637,203 @@ async function submitConfig(){
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('wizardMain').style.display='none';
     document.getElementById('doneScreen').style.display='block';
+    triggerConfetti();
   }catch(e){
     document.getElementById('overlayText').textContent='Something went wrong.';
     document.getElementById('overlaySub').textContent='Check your terminal for details.';
   }
 }
+
+// ─── Confetti ───
+function triggerConfetti(){
+  const canvas = document.createElement('canvas');
+  canvas.style.position = 'fixed';
+  canvas.style.inset = '0';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.zIndex = '9999';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const colors = ['#22c55e', '#3b82f6', '#a855f7', '#f43f5e', '#eab308', '#ffffff'];
+
+  for(let i=0; i<100; i++){
+    particles.push({
+      x: canvas.width/2, y: canvas.height/2 + 100,
+      vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20 - 5,
+      size: Math.random()*8+4, color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*360, rotSpeed: (Math.random()-0.5)*10
+    });
+  }
+
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let active = false;
+    particles.forEach(p => {
+      p.vy += 0.4; // gravity
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.rotSpeed;
+      if(p.y < canvas.height + 20) active = true;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+      ctx.restore();
+    });
+    
+    if(active) requestAnimationFrame(render);
+    else canvas.remove();
+  }
+  render();
+}
+
+// ─── Live File Tree ───
+function computeFileTree() {
+  const ext = state.language === 'ts' ? '.ts' : '.js';
+  const files = [];
+
+  // Root files (always present)
+  files.push({ name: projectName, depth: 0, isDir: true });
+  files.push({ name: 'server.js', depth: 1 });
+  files.push({ name: 'package.json', depth: 1 });
+  files.push({ name: 'zerra.config.json', depth: 1 });
+  files.push({ name: '.gitignore', depth: 1 });
+
+  if (state.features.dotenv) {
+    files.push({ name: '.env', depth: 1 });
+  }
+
+  if (state.language === 'ts') {
+    files.push({ name: 'tsconfig.json', depth: 1 });
+  }
+
+  // api/ directory
+  files.push({ name: 'api/', depth: 1, isDir: true });
+  files.push({ name: 'index' + ext, depth: 2 });
+
+  if (state.features.middleware) {
+    files.push({ name: '_middleware' + ext, depth: 2 });
+  }
+  if (state.features.errors) {
+    files.push({ name: '_error' + ext, depth: 2 });
+  }
+  if (state.features.guards) {
+    files.push({ name: '_guard' + ext, depth: 2 });
+  }
+  if (state.features.transforms) {
+    files.push({ name: '_transform' + ext, depth: 2 });
+  }
+
+  // Dynamic route example
+  if (state.features.dynamicRouting) {
+    files.push({ name: 'users/', depth: 2, isDir: true });
+    files.push({ name: '[id]' + ext, depth: 3 });
+  }
+
+  // Auth routes
+  if (state.includeAuth) {
+    files.push({ name: 'auth/', depth: 2, isDir: true });
+    files.push({ name: 'login' + ext, depth: 3 });
+    files.push({ name: 'register' + ext, depth: 3 });
+  }
+
+  // services/ directory
+  files.push({ name: 'services/', depth: 1, isDir: true });
+
+  // Database service
+  const dbMap = { 'js-sql': 'db' + ext, 'js-mongo': 'mongo' + ext, 'js-supabase': 'supabase' + ext, 'js-firebase': 'firebase' + ext };
+  if (dbMap[state.database]) {
+    files.push({ name: dbMap[state.database], depth: 2 });
+  }
+
+  // Auth config
+  if (state.includeAuth) {
+    files.push({ name: 'config/', depth: 1, isDir: true });
+    files.push({ name: 'auth' + ext, depth: 2 });
+  }
+
+  // Jobs
+  if (state.features.cron) {
+    files.push({ name: 'jobs/', depth: 1, isDir: true });
+    files.push({ name: 'cleanup' + ext, depth: 2 });
+  }
+
+  // Static
+  if (state.features.static) {
+    files.push({ name: 'public/', depth: 1, isDir: true });
+  }
+
+  return files;
+}
+
+let prevTreeKeys = new Set();
+
+function renderFileTree() {
+  const files = computeFileTree();
+  const body = document.getElementById('fileTreeBody');
+  const newKeys = new Set(files.map(f => f.depth + ':' + f.name));
+
+  // Update title
+  document.getElementById('treeTitle').textContent = projectName;
+
+  // Build HTML
+  let html = '';
+  const fileCount = files.filter(f => !f.isDir).length;
+
+  files.forEach((f, i) => {
+    const key = f.depth + ':' + f.name;
+    const isNew = !prevTreeKeys.has(key);
+    const indent = '  '.repeat(f.depth);
+
+    // Tree connector lines
+    let connector = '';
+    if (f.depth > 0) {
+      // Check if this is the last item at its depth level
+      let isLast = true;
+      for (let j = i + 1; j < files.length; j++) {
+        if (files[j].depth === f.depth) { isLast = false; break; }
+        if (files[j].depth < f.depth) break;
+      }
+      connector = isLast ? '└─ ' : '├─ ';
+    }
+
+    // Icon
+    let icon = f.isDir ? '📁' : '📄';
+    if (f.name.startsWith('.env')) icon = '🔒';
+    else if (f.name.startsWith('.git')) icon = '📋';
+    else if (f.name === 'package.json' || f.name === 'tsconfig.json') icon = '📦';
+    else if (f.name === 'zerra.config.json') icon = '⚡';
+    else if (f.name === 'server.js') icon = '🖥️';
+    else if (f.name.startsWith('_middleware')) icon = '🛡️';
+    else if (f.name.startsWith('_error')) icon = '🚨';
+    else if (f.name.startsWith('_guard')) icon = '🔐';
+    else if (f.name.startsWith('_transform')) icon = '🔄';
+    else if (f.name.startsWith('[')) icon = '🔗';
+    else if (f.name === 'public/') icon = '🌐';
+    else if (f.name === 'jobs/') icon = '⏰';
+
+    const nameClass = f.isDir ? 'tree-name is-dir' : (isNew && prevTreeKeys.size > 0 ? 'tree-name is-new' : 'tree-name');
+    const delay = isNew ? `animation-delay:${i * 20}ms` : '';
+
+    html += `<div class="tree-item" style="${delay}">`;
+    html += `<span class="tree-connector" style="white-space:pre">${indent}${connector}</span>`;
+    html += `<span class="tree-icon">${icon}</span>`;
+    html += `<span class="${nameClass}">${f.name}</span>`;
+    html += `</div>`;
+  });
+
+  body.innerHTML = html;
+  document.getElementById('fileCount').textContent = fileCount;
+  prevTreeKeys = newKeys;
+}
+
+// Initial render
+renderFileTree();
 </script>
 </body>
 </html>
