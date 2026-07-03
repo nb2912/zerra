@@ -127,7 +127,7 @@ function startServer(port = 3000) {
           registerPlugin(plugin);
         }
       } catch (e) {
-        console.error(`❌ Failed to load plugin:`, e);
+        console.error(`✖ Failed to load plugin:`, e);
       }
     });
   }
@@ -537,7 +537,7 @@ function startServer(port = 3000) {
 
       const routes = getRoutes(apiDir);
       const featureList = Object.entries(config.features)
-        .map(([k, v]) => `<li><strong>${k}</strong>: ${v ? '✅' : '❌'}</li>`).join('');
+        .map(([k, v]) => `<li><strong>${k}</strong>: ${v ? '✔' : '✖'}</li>`).join('');
       const routeList = routes.map(r => `<li><a href="${r.path}">${r.path}</a></li>`).join('');
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -811,7 +811,7 @@ function startServer(port = 3000) {
           ${Object.entries(config.features).map(([k, v]) => `
             <div class="feature-item" style="opacity: ${v ? '1' : '0.5'}">
               <span style="font-weight: 500;">${k}</span>
-              <span>${v ? '✅' : '❌'}</span>
+              <span>${v ? '✔' : '✖'}</span>
             </div>
           `).join('')}
         </div>
@@ -1285,7 +1285,7 @@ function startServer(port = 3000) {
                     }
                   }
                 } catch (e) {
-                  if (config.features.logging) console.error('❌ Guard error:', e.message);
+                  if (config.features.logging) console.error('✖ Guard error:', e.message);
                 }
               }
             }
@@ -1377,7 +1377,7 @@ function startServer(port = 3000) {
                         return originalJson.call(res, transformed);
                       }
                     } catch (e) {
-                      if (config.features.logging) console.error('❌ Transform error:', e.message);
+                      if (config.features.logging) console.error('✖ Transform error:', e.message);
                     }
                     return originalJson.call(res, data);
                   };
@@ -1463,7 +1463,7 @@ function startServer(port = 3000) {
                 return await actualErrorHandler(err, req, res);
               }
             } catch (e) {
-              console.error("❌ Error in custom error handler:", e);
+              console.error("✖ Error in custom error handler:", e);
             }
           }
 
@@ -1528,7 +1528,7 @@ function startServer(port = 3000) {
       try { job.stop(); } catch (e) {}
     });
     server.close(() => {
-      console.log('✅ Server closed. Goodbye!');
+      console.log('✔ Server closed. Goodbye!');
       process.exit(0);
     });
     // Force exit after 10 seconds if connections don't close

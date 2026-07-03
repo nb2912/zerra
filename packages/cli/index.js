@@ -48,17 +48,17 @@ program
         ? `// Response Transformer\nexport default (data: any, req: any, res: any) => {\n  return { success: res.statusCode < 400, data, timestamp: Date.now() };\n};\n`
         : `// Response Transformer\nexport default (data, req, res) => {\n  return { success: res.statusCode < 400, data, timestamp: Date.now() };\n};\n`;
     } else {
-      console.error(`❌ Unknown type '${type}'. Use 'route', 'middleware', 'job', 'guard', or 'transform'.`);
+      console.error(`✖ Unknown type '${type}'. Use 'route', 'middleware', 'job', 'guard', or 'transform'.`);
       return;
     }
 
     fs.ensureDirSync(path.dirname(targetPath));
     if (fs.existsSync(targetPath)) {
-      console.error(`❌ File already exists at ${targetPath}`);
+      console.error(`✖ File already exists at ${targetPath}`);
       return;
     }
     fs.writeFileSync(targetPath, template);
-    console.log(`✅ Generated ${type} at ${targetPath}`);
+    console.log(`✔ Generated ${type} at ${targetPath}`);
   });
 
 // ─── Add command (Database / Auth injection) ───
@@ -82,7 +82,7 @@ program
 
       const dbTemplatePath = path.join(__dirname, "templates", dbType);
       if (!fs.existsSync(dbTemplatePath)) {
-        console.error("❌ Template not found.");
+        console.error("✖ Template not found.");
         return;
       }
 
@@ -114,7 +114,7 @@ program
         }
       }
 
-      console.log(`✅ Database successfully added/updated!`);
+      console.log(`✔ Database successfully added/updated!`);
       console.log(`👉 Don't forget to run 'npm install' to install the new database drivers.`);
       
     } else if (feature === "auth") {
@@ -146,10 +146,10 @@ program
         await convertToTs(configDir);
       }
 
-      console.log(`✅ Auth starter successfully added!`);
+      console.log(`✔ Auth starter successfully added!`);
       console.log(`👉 Don't forget to run 'npm install' to install auth dependencies (jsonwebtoken, bcrypt).`);
     } else {
-      console.error(`❌ Unknown feature '${feature}'. Use 'database' or 'auth'.`);
+      console.error(`✖ Unknown feature '${feature}'. Use 'database' or 'auth'.`);
     }
   });
 
@@ -345,7 +345,7 @@ program
     const wizardHtmlPath = path.join(__dirname, "wizard", "index.html");
 
     if (!fs.existsSync(wizardHtmlPath)) {
-      console.error("❌ Wizard UI not found. Falling back to terminal mode.");
+      console.error("✖ Wizard UI not found. Falling back to terminal mode.");
       opts.browser = false;
       program.parse();
       return;
@@ -379,7 +379,7 @@ program
             // Close the server immediately
             server.close();
 
-            console.log(`  ✅ Configuration received from wizard!\n`);
+            console.log(`  ✔ Configuration received from wizard!\n`);
 
             // Scaffold the project
             await scaffoldProject(projectName, config);
