@@ -145,6 +145,38 @@ export default function Home() {
               Ditch the <code className="bg-foreground/10 px-2 py-1 rounded">try/catch</code> boilerplate. Throw a <code className="bg-foreground/10 px-2 py-1 rounded">ZerraError.NotFound()</code> anywhere, and the framework automatically formats a clean, standardized HTTP JSON response.
             </p>
           </div>
+
+          {/* Visual Setup Wizard */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Visual Setup Wizard</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Run <code className="bg-foreground/10 px-2 py-1 rounded">npx create-zerra-app</code> to launch a stunning browser-based configurator with a live file tree preview to scaffold your project visually.
+            </p>
+          </div>
+
+          {/* Declarative Guards */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Declarative Route Guards</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Export simple JSON rules in <code className="bg-foreground/10 px-2 py-1 rounded">_guard.js</code> files to effortlessly lock down routes with role-based access control without touching route logic.
+            </p>
+          </div>
+
+          {/* Response Transformers */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Response Transformers</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Standardize your API output across the entire app. Intercept and mutate outgoing payloads by dropping a <code className="bg-foreground/10 px-2 py-1 rounded">_transform.js</code> file anywhere.
+            </p>
+          </div>
+
+          {/* Architecture Upgrades */}
+          <div className="md:col-span-6 relative group overflow-hidden rounded-[40px] border border-border bg-foreground/[0.02] p-8 md:p-12 flex flex-col justify-end hover:bg-foreground/[0.04] transition-all duration-500 shadow-2xl shadow-black/5">
+            <h3 className="text-3xl font-black mb-3 tracking-tight">Architecture Upgrades</h3>
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Never get locked in. Run <code className="bg-foreground/10 px-2 py-1 rounded">npx zerra add database</code> to instantly inject PostgreSQL, MongoDB, Supabase, or Firebase into a live project.
+            </p>
+          </div>
         </div>
       </section>
 

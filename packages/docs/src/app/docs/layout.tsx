@@ -20,6 +20,8 @@ const DOCS_NAV = [
     items: [
       { title: "Routing", href: "/docs/routing" },
       { title: "Middleware", href: "/docs/middleware" },
+      { title: "Route Guards", href: "/docs/guards" },
+      { title: "Response Transforms", href: "/docs/transforms" },
       { title: "Validation", href: "/docs/validation" },
       { title: "Authentication", href: "/docs/auth" },
       { title: "Error Handling", href: "/docs/errors" },
