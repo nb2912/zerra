@@ -100,7 +100,6 @@ program
         basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(dbPkg.dependencies || {}) };
         await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
       }
-
       // Convert newly added files to TS if project is TS
       if (isTs) {
         const servicesDir = path.join(projectRoot, "services");
