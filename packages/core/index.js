@@ -1010,7 +1010,6 @@ function startServer(port = 3000) {
                if (typeof v === 'string') properties[k] = { type: v === 'number' ? 'number' : v === 'boolean' ? 'boolean' : 'string' };
                else properties[k] = { type: 'string' };
             });
-
             openapi.paths[swaggerPath][lowerMethod].requestBody = {
               content: {
                 "application/json": {
