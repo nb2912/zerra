@@ -1020,7 +1020,6 @@ function startServer(port = 3000) {
           }
         });
       });
-
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(`
         <!DOCTYPE html>
