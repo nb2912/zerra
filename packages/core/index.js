@@ -1778,7 +1778,7 @@ function startServer(port = 3000) {
           const feed = document.getElementById('log-feed');
           const entry = document.createElement('div');
           entry.className = 'log-entry';
-          entry.innerText = `[\${data.timestamp}] ⚡ New Vote for [\${data.lastVote.toUpperCase()}] from \${data.ip || 'Client'} (<1ms latency)`;
+          entry.innerText = '[' + data.timestamp + '] ⚡ New Vote for [' + data.lastVote.toUpperCase() + '] from ' + (data.ip || 'Client') + ' (<1ms latency)';
           feed.insertBefore(entry, feed.firstChild);
           if (feed.children.length > 20) feed.removeChild(feed.lastChild);
         }
