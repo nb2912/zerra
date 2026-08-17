@@ -1162,58 +1162,65 @@ function startServer(port = 3000) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Zerra Expo | Live Poll</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #000000;
-      --card-bg: rgba(12, 12, 18, 0.9);
-      --border: rgba(255, 255, 255, 0.12);
-      --text: #ffffff;
+      --foreground: #fafafa;
       --text-sub: #a1a1aa;
+      --border: rgba(255, 255, 255, 0.08);
+      --card-bg: rgba(255, 255, 255, 0.02);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #000000;
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 70%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 30px 30px, 30px 30px;
-      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle at 50% 50%, rgba(120, 120, 120, 0.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-attachment: fixed;
+      color: var(--foreground);
       margin: 0;
       padding: 1.25rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      letter-spacing: -0.01em;
     }
     .header {
       text-align: center;
       margin: 0.5rem 0 1.5rem 0;
     }
-    .badge-pill {
+    .brand-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #818cf8;
-      padding: 5px 14px;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
       border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .brand-logo-small {
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 5px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin-bottom: 0.75rem;
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
     }
     .header h1 {
       margin: 0;
-      font-size: 1.9rem;
+      font-size: 2rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #ffffff;
-      text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      letter-spacing: -0.03em;
+      color: #fafafa;
     }
     .header p {
       color: var(--text-sub);
@@ -1228,56 +1235,48 @@ function startServer(port = 3000) {
       flex-grow: 1;
       justify-content: center;
     }
-    .option-card {
+    .bento-card {
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 24px;
       padding: 1.35rem 1.5rem;
       display: flex;
       align-items: center;
       gap: 1.25rem;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
     }
-    .option-card:active {
-      transform: scale(0.96);
+    .bento-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.2);
     }
-    .option-card.card-routing { border-left: 4px solid #6366f1; }
-    .option-card.card-security { border-left: 4px solid #10b981; }
-    .option-card.card-speed { border-left: 4px solid #ec4899; }
-    .option-card.card-console { border-left: 4px solid #f59e0b; }
+    .bento-card:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #ffffff;
+    }
 
-    .option-card.card-routing:active { background: rgba(99, 102, 241, 0.25); border-color: #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); }
-    .option-card.card-security:active { background: rgba(16, 185, 129, 0.25); border-color: #10b981; box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); }
-    .option-card.card-speed:active { background: rgba(236, 72, 153, 0.25); border-color: #ec4899; box-shadow: 0 0 25px rgba(236, 72, 153, 0.4); }
-    .option-card.card-console:active { background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
-
-    .icon-ring {
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
+    .icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.65rem;
+      font-size: 1.5rem;
       flex-shrink: 0;
-      background: #000000;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
-    .card-routing .icon-ring { border: 1px solid rgba(99, 102, 241, 0.5); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
-    .card-security .icon-ring { border: 1px solid rgba(16, 185, 129, 0.5); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
-    .card-speed .icon-ring { border: 1px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 15px rgba(236, 72, 153, 0.2); }
-    .card-console .icon-ring { border: 1px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
 
     .info h3 {
       margin: 0 0 4px 0;
       font-size: 1.1rem;
-      font-weight: 700;
-      color: #ffffff;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fafafa;
     }
     .info p {
       margin: 0;
@@ -1289,14 +1288,13 @@ function startServer(port = 3000) {
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(120px);
-      background: #09090b;
-      border: 1px solid #10b981;
-      color: white;
-      padding: 14px 24px;
+      background: #fafafa;
+      color: #000000;
+      padding: 14px 26px;
       border-radius: 9999px;
       font-weight: 700;
       font-size: 0.9rem;
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       z-index: 1000;
       pointer-events: none;
@@ -1311,46 +1309,49 @@ function startServer(port = 3000) {
     footer {
       text-align: center;
       font-size: 0.75rem;
-      color: #52525b;
+      color: #71717a;
       margin-top: 1.5rem;
-      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="badge-pill">⚡ ZERRA EXPO POLL</div>
+    <div class="brand-pill">
+      <div class="brand-logo-small">Z</div>
+      <span>ZERRA EXPO POLL</span>
+    </div>
     <h1>What makes Zerra awesome?</h1>
     <p>Tap any feature below to trigger a live reaction on the main booth display!</p>
   </div>
   
   <div class="options-grid">
-    <div class="option-card card-routing" onclick="castVote('routing')">
-      <div class="icon-ring">⚡</div>
+    <div class="bento-card" onclick="castVote('routing')">
+      <div class="icon-box">⚡</div>
       <div class="info">
         <h3>File-based Routing</h3>
         <p>Zero-config folder structure. Your layout IS your API.</p>
       </div>
     </div>
     
-    <div class="option-card card-security" onclick="castVote('security')">
-      <div class="icon-ring">🛡️</div>
+    <div class="bento-card" onclick="castVote('security')">
+      <div class="icon-box">🛡️</div>
       <div class="info">
         <h3>Built-in Security</h3>
         <p>Auto rate-limiting, CORS & path traversal protection.</p>
       </div>
     </div>
     
-    <div class="option-card card-speed" onclick="castVote('speed')">
-      <div class="icon-ring">🚀</div>
+    <div class="bento-card" onclick="castVote('speed')">
+      <div class="icon-box">🚀</div>
       <div class="info">
         <h3>1ms Latency Engine</h3>
         <p>Ultra-fast O(K) Radix Trie route lookup under the hood.</p>
       </div>
     </div>
     
-    <div class="option-card card-console" onclick="castVote('console')">
-      <div class="icon-ring">💻</div>
+    <div class="bento-card" onclick="castVote('console')">
+      <div class="icon-box">💻</div>
       <div class="info">
         <h3>Dev Console & Tools</h3>
         <p>Built-in interactive endpoint playground at /__zerra.</p>
@@ -1359,7 +1360,7 @@ function startServer(port = 3000) {
   </div>
 
   <div id="status-toast">
-    <span style="color:#10b981;font-size:1.2rem;">✔</span> <span id="toast-text">Vote Cast in 0.4ms!</span>
+    <span style="color:#000000;font-size:1.2rem;">✔</span> <span id="toast-text">Vote Cast in 0.4ms!</span>
   </div>
 
   <footer>ZERRA FRAMEWORK ENGINE • SUB-MILLISECOND SSE</footer>
@@ -1404,41 +1405,36 @@ function startServer(port = 3000) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zerra Expo | Live Interactive Showcase</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #000000;
-      --card-bg: rgba(10, 10, 15, 0.9);
-      --border: rgba(255, 255, 255, 0.12);
-      --text: #ffffff;
+      --foreground: #fafafa;
       --text-sub: #a1a1aa;
-      --color-routing: #6366f1;
-      --color-security: #10b981;
-      --color-speed: #ec4899;
-      --color-console: #f59e0b;
+      --border: rgba(255, 255, 255, 0.08);
+      --card-bg: rgba(255, 255, 255, 0.02);
     }
     * { box-sizing: border-box; }
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #000000;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0px, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.12) 0px, transparent 40%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
-      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle at 50% 50%, rgba(120, 120, 120, 0.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-attachment: fixed;
+      color: var(--foreground);
       margin: 0;
       padding: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      letter-spacing: -0.01em;
     }
     header {
-      background: rgba(0, 0, 0, 0.95);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      padding: 1.25rem 3rem;
+      padding: 1rem 3rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1449,44 +1445,64 @@ function startServer(port = 3000) {
     .brand {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 8px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      letter-spacing: -0.05em;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
     .brand h1 {
       margin: 0;
-      font-family: 'Outfit', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fafafa;
+    }
+    .expo-tag {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #a1a1aa;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: 6px;
     }
     .status-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #34d399;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: #fafafa;
       padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.8rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
     }
     .pulse-dot {
       width: 8px;
       height: 8px;
-      background: #34d399;
+      background: #ffffff;
       border-radius: 50%;
-      box-shadow: 0 0 12px #34d399;
+      box-shadow: 0 0 10px #ffffff;
       animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.7; }
+      0% { transform: scale(0.9); opacity: 0.6; }
       50% { transform: scale(1.4); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.7; }
+      100% { transform: scale(0.9); opacity: 0.6; }
     }
     main {
       flex-grow: 1;
@@ -1500,17 +1516,20 @@ function startServer(port = 3000) {
     }
     @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
     
-    .obsidian-card {
+    .bento-card-large {
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
       border: 1px solid var(--border);
-      border-radius: 28px;
-      padding: 2.25rem;
-      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border-radius: 36px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
       position: relative;
       overflow: hidden;
+      transition: border-color 0.3s ease;
+    }
+    .bento-card-large:hover {
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     .card-header {
@@ -1521,25 +1540,20 @@ function startServer(port = 3000) {
     }
     .card-header h2 {
       margin: 0;
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.85rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #ffffff;
+      letter-spacing: -0.03em;
+      color: #fafafa;
     }
     .total-badge {
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #a5b4fc;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #fafafa;
       padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.85rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+      font-family: 'JetBrains Mono', monospace;
     }
 
     /* Bars Container */
@@ -1559,37 +1573,37 @@ function startServer(port = 3000) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .bar-track {
-      background: #000000;
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
-      height: 34px;
-      border-radius: 17px;
+      height: 36px;
+      border-radius: 18px;
       overflow: hidden;
       position: relative;
       padding: 3px;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
     }
     .bar-fill {
       height: 100%;
       width: 0%;
-      border-radius: 14px;
+      border-radius: 15px;
       transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
-    .bar-fill.bar-routing { background: linear-gradient(90deg, #6366f1, #06b6d4); box-shadow: 0 0 25px rgba(99, 102, 241, 0.6); }
-    .bar-fill.bar-security { background: linear-gradient(90deg, #10b981, #14b8a6); box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
-    .bar-fill.bar-speed { background: linear-gradient(90deg, #ec4899, #8b5cf6); box-shadow: 0 0 25px rgba(236, 72, 153, 0.6); }
-    .bar-fill.bar-console { background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
+    .bar-fill.bar-routing { background: linear-gradient(90deg, #ffffff, #a1a1aa); box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+    .bar-fill.bar-security { background: linear-gradient(90deg, #34d399, #059669); box-shadow: 0 0 20px rgba(52, 211, 153, 0.3); }
+    .bar-fill.bar-speed { background: linear-gradient(90deg, #818cf8, #4f46e5); box-shadow: 0 0 20px rgba(129, 140, 248, 0.3); }
+    .bar-fill.bar-console { background: linear-gradient(90deg, #f472b6, #db2777); box-shadow: 0 0 20px rgba(244, 114, 182, 0.3); }
 
     .bar-fill.pulse-anim {
       animation: flashGlow 0.5s ease-out;
     }
     @keyframes flashGlow {
       0% { filter: brightness(1); transform: scaleY(1); }
-      50% { filter: brightness(2.2); transform: scaleY(1.15); }
+      50% { filter: brightness(2); transform: scaleY(1.15); }
       100% { filter: brightness(1); transform: scaleY(1); }
     }
 
@@ -1598,16 +1612,14 @@ function startServer(port = 3000) {
       text-align: center;
       align-items: center;
       justify-content: center;
-      background: #050508;
-      border: 1px solid var(--border);
     }
     .qr-frame {
       background: #ffffff;
-      padding: 20px;
-      border-radius: 24px;
-      box-shadow: 0 0 60px rgba(99, 102, 241, 0.4);
+      padding: 22px;
+      border-radius: 28px;
+      box-shadow: 0 0 50px rgba(255, 255, 255, 0.15);
       display: inline-block;
-      margin: 1.5rem 0;
+      margin: 1.75rem 0;
       transition: transform 0.3s ease;
     }
     .qr-frame:hover {
@@ -1617,62 +1629,62 @@ function startServer(port = 3000) {
       display: block;
       width: 230px;
       height: 230px;
-      border-radius: 8px;
+      border-radius: 12px;
     }
     .url-chip {
-      background: #000000;
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 12px 22px;
       border-radius: 14px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
-      color: #38bdf8;
-      font-weight: 600;
+      font-size: 0.92rem;
+      color: #fafafa;
+      font-weight: 500;
       word-break: break-all;
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
 
-    /* Log Feed */
+    /* Terminal Feed */
     .terminal-feed {
       margin-top: 2rem;
-      background: #000000;
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 1.25rem;
       height: 140px;
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.82rem;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);
     }
     .log-line {
-      color: #34d399;
+      color: #a1a1aa;
       margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .log-time { color: #52525b; }
-    .log-badge { background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+    .log-badge { background: rgba(255, 255, 255, 0.1); color: #fafafa; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
     canvas {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      border-radius: 28px;
+      border-radius: 36px;
     }
   </style>
 </head>
 <body>
   <header>
     <div class="brand">
-      <h1>Zerra<span style="font-weight:300;opacity:0.6;font-size:1.6rem;margin-left:4px;">Expo Showcase</span></h1>
+      <div class="brand-logo">Z</div>
+      <h1>Zerra</h1>
+      <span class="expo-tag">EXPO SHOWCASE</span>
     </div>
     <div style="display:flex;gap:16px;align-items:center;">
-      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:white;padding:8px 18px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
+      <button onclick="toggleAudio()" id="audio-btn" style="background:transparent;border:1px solid var(--border);color:#fafafa;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
       <div class="status-chip">
         <div class="pulse-dot"></div>
         LIVE ENGINE CONNECTED
@@ -1681,7 +1693,7 @@ function startServer(port = 3000) {
   </header>
 
   <main>
-    <div class="obsidian-card">
+    <div class="bento-card-large">
       <canvas id="particle-canvas"></canvas>
       <div class="card-header">
         <h2>⚡ Live Feature Leaderboard</h2>
@@ -1691,8 +1703,8 @@ function startServer(port = 3000) {
       <div class="bars-container">
         <div class="bar-item">
           <div class="bar-meta">
-            <span style="color: var(--color-routing);">⚡ File-based Routing</span>
-            <span id="count-routing" style="font-family:'JetBrains Mono';">0 (0%)</span>
+            <span style="color: #fafafa;">⚡ File-based Routing</span>
+            <span id="count-routing" style="font-family:'JetBrains Mono';color:#a1a1aa;">0 (0%)</span>
           </div>
           <div class="bar-track">
             <div id="bar-routing" class="bar-fill bar-routing"></div>
@@ -1701,8 +1713,8 @@ function startServer(port = 3000) {
 
         <div class="bar-item">
           <div class="bar-meta">
-            <span style="color: var(--color-security);">🛡️ Built-in Security</span>
-            <span id="count-security" style="font-family:'JetBrains Mono';">0 (0%)</span>
+            <span style="color: #34d399;">🛡️ Built-in Security</span>
+            <span id="count-security" style="font-family:'JetBrains Mono';color:#a1a1aa;">0 (0%)</span>
           </div>
           <div class="bar-track">
             <div id="bar-security" class="bar-fill bar-security"></div>
@@ -1711,8 +1723,8 @@ function startServer(port = 3000) {
 
         <div class="bar-item">
           <div class="bar-meta">
-            <span style="color: var(--color-speed);">🚀 1ms Latency Engine</span>
-            <span id="count-speed" style="font-family:'JetBrains Mono';">0 (0%)</span>
+            <span style="color: #818cf8;">🚀 1ms Latency Engine</span>
+            <span id="count-speed" style="font-family:'JetBrains Mono';color:#a1a1aa;">0 (0%)</span>
           </div>
           <div class="bar-track">
             <div id="bar-speed" class="bar-fill bar-speed"></div>
@@ -1721,8 +1733,8 @@ function startServer(port = 3000) {
 
         <div class="bar-item">
           <div class="bar-meta">
-            <span style="color: var(--color-console);">💻 Dev Console & Tools</span>
-            <span id="count-console" style="font-family:'JetBrains Mono';">0 (0%)</span>
+            <span style="color: #f472b6;">💻 Dev Console & Tools</span>
+            <span id="count-console" style="font-family:'JetBrains Mono';color:#a1a1aa;">0 (0%)</span>
           </div>
           <div class="bar-track">
             <div id="bar-console" class="bar-fill bar-console"></div>
@@ -1735,19 +1747,19 @@ function startServer(port = 3000) {
       </div>
     </div>
 
-    <div class="obsidian-card qr-card">
-      <h2 style="margin:0 0 0.5rem 0;font-family:'Outfit';font-size:1.6rem;font-weight:800;color:#ffffff;">📱 Scan to Vote Live</h2>
-      <p style="color:var(--text-sub);font-size:0.92rem;margin-bottom:1.5rem;line-height:1.4;">Point your phone camera at the QR code below to cast your vote live on screen!</p>
+    <div class="bento-card-large qr-card">
+      <h2 style="margin:0 0 0.5rem 0;font-size:1.85rem;font-weight:800;letter-spacing:-0.03em;color:#fafafa;">📱 Scan to Vote Live</h2>
+      <p style="color:var(--text-sub);font-size:0.95rem;margin-bottom:1.5rem;line-height:1.5;">Point your phone camera at the QR code below to cast your vote live on screen!</p>
       
       <div class="qr-frame">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(voteUrl)}" alt="Vote QR Code" />
       </div>
 
       <div class="url-chip">
-        <span>🔗</span>
+        <span style="color:#a1a1aa;">🔗</span>
         <span>${voteUrl}</span>
       </div>
-      <p style="color:#52525b;font-size:0.78rem;margin-top:1.25rem;letter-spacing:0.5px;">POWERED BY ZERRA CORE v1.3.1</p>
+      <p style="color:#71717a;font-size:0.78rem;margin-top:1.5rem;font-family:'JetBrains Mono', monospace;">POWERED BY ZERRA CORE v1.3.1</p>
     </div>
   </main>
 
@@ -1828,10 +1840,10 @@ function startServer(port = 3000) {
 
     const evtSource = new EventSource('/__zerra/expo/api/stream');
     const colors = {
-      routing: '#6366f1',
-      security: '#10b981',
-      speed: '#ec4899',
-      console: '#f59e0b'
+      routing: '#ffffff',
+      security: '#34d399',
+      speed: '#818cf8',
+      console: '#f472b6'
     };
 
     evtSource.onmessage = function(e) {
@@ -1853,7 +1865,7 @@ function startServer(port = 3000) {
 
         if (data.lastVote) {
           playBlipSound();
-          triggerParticles(colors[data.lastVote] || '#6366f1');
+          triggerParticles(colors[data.lastVote] || '#ffffff');
           const barEl = document.getElementById('bar-' + data.lastVote);
           if (barEl) {
             barEl.classList.remove('pulse-anim');
