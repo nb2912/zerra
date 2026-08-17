@@ -1161,108 +1161,154 @@ function startServer(port = 3000) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Zerra Expo Poll</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <title>Zerra Expo | Live Poll</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: rgba(22, 30, 49, 0.8);
-      --text: #f8fafc;
-      --border: rgba(255, 255, 255, 0.1);
+      --bg: #030712;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f9fafb;
+      --text-sub: #9ca3af;
     }
-    * { box-sizing: border-box; touch-action: manipulation; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.2) 0px, transparent 60%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 60%);
       color: var(--text);
       margin: 0;
       padding: 1.25rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
     }
     .header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin: 0.5rem 0 1.5rem 0;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
     }
     .header h1 {
       margin: 0;
-      font-size: 1.75rem;
+      font-size: 1.85rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .header p {
-      color: #94a3b8;
-      font-size: 0.9rem;
+      color: var(--text-sub);
+      font-size: 0.88rem;
       margin: 0.5rem 0 0 0;
+      line-height: 1.4;
     }
     .options-grid {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       flex-grow: 1;
+      justify-content: center;
     }
     .option-card {
       background: var(--card-bg);
+      backdrop-filter: blur(16px);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.25rem;
+      border-radius: 20px;
+      padding: 1.25rem 1.5rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.25rem;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       position: relative;
       overflow: hidden;
     }
-    .option-card:active {
-      transform: scale(0.97);
-      background: rgba(99, 102, 241, 0.15);
-      border-color: #818cf8;
+    .option-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
     }
-    .option-icon {
-      font-size: 2.2rem;
-      width: 50px;
-      height: 50px;
+    .option-card:active {
+      transform: scale(0.96);
+    }
+    .option-card.card-routing:active { background: rgba(99, 102, 241, 0.2); border-color: #6366f1; }
+    .option-card.card-security:active { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+    .option-card.card-speed:active { background: rgba(236, 72, 153, 0.2); border-color: #ec4899; }
+    .option-card.card-console:active { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; }
+
+    .icon-ring {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
+      font-size: 1.6rem;
       flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
-    .option-info h3 {
+    .card-routing .icon-ring { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2)); border: 1px solid rgba(99, 102, 241, 0.3); }
+    .card-security .icon-ring { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(20, 184, 166, 0.2)); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .card-speed .icon-ring { background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2)); border: 1px solid rgba(236, 72, 153, 0.3); }
+    .card-console .icon-ring { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2)); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    .info h3 {
       margin: 0 0 4px 0;
       font-size: 1.1rem;
       font-weight: 700;
-      color: #f8fafc;
+      color: #ffffff;
     }
-    .option-info p {
+    .info p {
       margin: 0;
-      font-size: 0.82rem;
-      color: #94a3b8;
+      font-size: 0.83rem;
+      color: var(--text-sub);
     }
     #status-toast {
       position: fixed;
-      bottom: 20px;
+      bottom: 24px;
       left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: linear-gradient(135deg, #10b981, #059669);
+      transform: translateX(-50%) translateY(120px);
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid #10b981;
       color: white;
       padding: 14px 24px;
       border-radius: 9999px;
       font-weight: 700;
-      font-size: 0.95rem;
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      font-size: 0.9rem;
+      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       z-index: 1000;
       pointer-events: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      white-space: nowrap;
     }
     #status-toast.active {
       transform: translateX(-50%) translateY(0);
@@ -1270,60 +1316,62 @@ function startServer(port = 3000) {
     footer {
       text-align: center;
       font-size: 0.75rem;
-      color: #64748b;
+      color: #6b7280;
       margin-top: 1.5rem;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🚀 Zerra Expo</h1>
-    <p>Tap your favorite feature to vote live on screen!</p>
+    <div class="badge-pill">🚀 ZERRA EXPO POLL</div>
+    <h1>What makes Zerra awesome?</h1>
+    <p>Tap any feature below to trigger a live reaction on the main booth display!</p>
   </div>
   
   <div class="options-grid">
-    <div class="option-card" onclick="castVote('routing')">
-      <div class="option-icon">⚡</div>
-      <div class="option-info">
+    <div class="option-card card-routing" onclick="castVote('routing')">
+      <div class="icon-ring">⚡</div>
+      <div class="info">
         <h3>File-based Routing</h3>
-        <p>Zero configuration folders, routing perfected.</p>
+        <p>Zero-config folder structure. Your layout IS your API.</p>
       </div>
     </div>
     
-    <div class="option-card" onclick="castVote('security')">
-      <div class="option-icon">🛡️</div>
-      <div class="option-info">
+    <div class="option-card card-security" onclick="castVote('security')">
+      <div class="icon-ring">🛡️</div>
+      <div class="info">
         <h3>Built-in Security</h3>
-        <p>Auto rate-limiting & path traversal protection.</p>
+        <p>Auto rate-limiting, CORS & path traversal protection.</p>
       </div>
     </div>
     
-    <div class="option-card" onclick="castVote('speed')">
-      <div class="option-icon">🚀</div>
-      <div class="option-info">
-        <h3>1ms Latency</h3>
-        <p>Ultra-fast Radix Trie engine under the hood.</p>
+    <div class="option-card card-speed" onclick="castVote('speed')">
+      <div class="icon-ring">🚀</div>
+      <div class="info">
+        <h3>1ms Latency Engine</h3>
+        <p>Ultra-fast O(K) Radix Trie route lookup under the hood.</p>
       </div>
     </div>
     
-    <div class="option-card" onclick="castVote('console')">
-      <div class="option-icon">💻</div>
-      <div class="option-info">
-        <h3>Dev Console</h3>
-        <p>Built-in interactive playground at /__zerra.</p>
+    <div class="option-card card-console" onclick="castVote('console')">
+      <div class="icon-ring">💻</div>
+      <div class="info">
+        <h3>Dev Console & Tools</h3>
+        <p>Built-in interactive endpoint playground at /__zerra.</p>
       </div>
     </div>
   </div>
 
   <div id="status-toast">
-    <span>⚡</span> <span id="toast-text">Vote Cast in 0.4ms!</span>
+    <span style="color:#10b981;font-size:1.2rem;">✔</span> <span id="toast-text">Vote Cast in 0.4ms!</span>
   </div>
 
-  <footer>Powered by Zerra Core v1.3.1</footer>
+  <footer>ZERRA FRAMEWORK ENGINE • SUB-MILLISECOND SSE</footer>
 
   <script>
     async function castVote(option) {
-      if (navigator.vibrate) navigator.vibrate(50);
+      if (navigator.vibrate) navigator.vibrate(60);
       try {
         const start = performance.now();
         const res = await fetch('/__zerra/expo/api/vote', {
@@ -1333,7 +1381,7 @@ function startServer(port = 3000) {
         });
         const duration = (performance.now() - start).toFixed(1);
         if (res.ok) {
-          showToast('Vote Cast in ' + duration + 'ms! ⚡ (Watch the Screen)');
+          showToast('Vote Sent in ' + duration + 'ms! ⚡ (Watch the Screen)');
         }
       } catch (err) {
         showToast('✖ Network error');
@@ -1360,26 +1408,29 @@ function startServer(port = 3000) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zerra Expo Live Display</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Zerra Expo | Live Interactive Showcase</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #07090e;
-      --card-bg: rgba(18, 26, 43, 0.7);
-      --text: #f8fafc;
+      --bg: #030712;
+      --card-bg: rgba(17, 24, 39, 0.65);
       --border: rgba(255, 255, 255, 0.08);
-      --color-routing: #818cf8;
-      --color-security: #34d399;
-      --color-speed: #f472b6;
-      --color-console: #fbbf24;
+      --text: #f9fafb;
+      --text-sub: #9ca3af;
+      --color-routing: #6366f1;
+      --color-security: #10b981;
+      --color-speed: #ec4899;
+      --color-console: #f59e0b;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--bg);
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.12) 0px, transparent 50%);
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.18) 0px, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.15) 0px, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+      background-attachment: fixed;
       color: var(--text);
       margin: 0;
       padding: 0;
@@ -1389,35 +1440,40 @@ function startServer(port = 3000) {
       overflow-x: hidden;
     }
     header {
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(12px);
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      padding: 1.25rem 2.5rem;
+      padding: 1.25rem 3rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
     }
     .brand h1 {
       margin: 0;
-      font-size: 1.8rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
       font-weight: 900;
-      background: linear-gradient(to right, #818cf8, #c084fc, #f472b6);
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #3b82f6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .status-badge {
-      display: flex;
+    .status-chip {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.12);
       border: 1px solid rgba(16, 185, 129, 0.3);
       color: #34d399;
-      padding: 6px 14px;
+      padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.8rem;
       font-weight: 700;
@@ -1428,97 +1484,125 @@ function startServer(port = 3000) {
       height: 8px;
       background: #34d399;
       border-radius: 50%;
-      box-shadow: 0 0 10px #34d399;
+      box-shadow: 0 0 12px #34d399;
       animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
       0% { transform: scale(0.9); opacity: 0.7; }
-      50% { transform: scale(1.3); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 1; }
       100% { transform: scale(0.9); opacity: 0.7; }
     }
     main {
       flex-grow: 1;
-      max-width: 1500px;
+      max-width: 1600px;
       width: 100%;
       margin: 0 auto;
-      padding: 2rem 2.5rem;
+      padding: 2.5rem 3rem;
       display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 2rem;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 2.5rem;
     }
-    @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
     
-    .card {
+    .glass-card {
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(24px);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 2rem;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      border-radius: 28px;
+      padding: 2.25rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
       position: relative;
+      overflow: hidden;
     }
-    .card-title {
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin: 0 0 1.5rem 0;
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 28px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 2rem;
     }
-    .total-pill {
-      background: rgba(99, 102, 241, 0.2);
+    .card-header h2 {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .total-badge {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
       border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #a5b4fc;
-      padding: 4px 12px;
+      color: #e2e8f0;
+      padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.85rem;
       font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
-    /* Voting Bars */
+    /* Bars Container */
     .bars-container {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.75rem;
       flex-grow: 1;
       justify-content: center;
     }
     .bar-item {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
-    .bar-label {
+    .bar-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 700;
     }
     .bar-track {
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.5);
       border: 1px solid var(--border);
-      height: 28px;
-      border-radius: 14px;
+      height: 32px;
+      border-radius: 16px;
       overflow: hidden;
       position: relative;
+      padding: 3px;
     }
     .bar-fill {
       height: 100%;
       width: 0%;
-      border-radius: 14px;
-      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 0 20px currentColor;
+      border-radius: 13px;
+      transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
+    .bar-fill.bar-routing { background: linear-gradient(90deg, #6366f1, #06b6d4); box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+    .bar-fill.bar-security { background: linear-gradient(90deg, #10b981, #14b8a6); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+    .bar-fill.bar-speed { background: linear-gradient(90deg, #ec4899, #8b5cf6); box-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
+    .bar-fill.bar-console { background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+
     .bar-fill.pulse-anim {
-      animation: barGlow 0.4s ease-out;
+      animation: flashGlow 0.5s ease-out;
     }
-    @keyframes barGlow {
+    @keyframes flashGlow {
       0% { filter: brightness(1); transform: scaleY(1); }
-      50% { filter: brightness(1.8); transform: scaleY(1.1); }
+      50% { filter: brightness(2); transform: scaleY(1.15); }
       100% { filter: brightness(1); transform: scaleY(1); }
     }
 
@@ -1527,141 +1611,153 @@ function startServer(port = 3000) {
       text-align: center;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      background: linear-gradient(160deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
     }
     .qr-frame {
-      background: white;
-      padding: 16px;
-      border-radius: 20px;
-      box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 24px;
+      box-shadow: 0 0 50px rgba(99, 102, 241, 0.35);
       display: inline-block;
-      margin-bottom: 1.5rem;
+      margin: 1.5rem 0;
+      transition: transform 0.3s ease;
+    }
+    .qr-frame:hover {
+      transform: scale(1.03);
     }
     .qr-frame img {
       display: block;
-      width: 220px;
-      height: 220px;
+      width: 230px;
+      height: 230px;
+      border-radius: 8px;
     }
-    .url-box {
-      background: rgba(0, 0, 0, 0.4);
+    .url-chip {
+      background: rgba(0, 0, 0, 0.5);
       border: 1px solid var(--border);
-      padding: 10px 18px;
-      border-radius: 12px;
-      font-family: monospace;
-      font-size: 1rem;
-      color: #38bdf8;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      word-break: break-all;
-    }
-    
-    /* Live Log Feed */
-    .log-feed {
-      margin-top: 1.5rem;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid var(--border);
+      padding: 12px 20px;
       border-radius: 14px;
-      padding: 1rem;
-      height: 120px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: #38bdf8;
+      font-weight: 600;
+      word-break: break-all;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Log Feed */
+    .terminal-feed {
+      margin-top: 2rem;
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.25rem;
+      height: 140px;
       overflow-y: auto;
-      font-family: monospace;
-      font-size: 0.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
     }
-    .log-entry {
+    .log-line {
       color: #34d399;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    .log-time { color: #64748b; }
+    .log-badge { background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
     canvas {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      border-radius: 24px;
+      border-radius: 28px;
     }
   </style>
 </head>
 <body>
   <header>
     <div class="brand">
-      <h1>🚀 Zerra<span style="font-weight:300;opacity:0.6;">Expo</span></h1>
+      <h1>Zerra<span style="font-weight:300;opacity:0.6;font-size:1.6rem;margin-left:4px;">Expo Showcase</span></h1>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;">
-      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.1);border:1px solid var(--border);color:white;padding:6px 14px;border-radius:9999px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔊 Sound: ON</button>
-      <div class="status-badge">
+    <div style="display:flex;gap:16px;align-items:center;">
+      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:white;padding:8px 18px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
+      <div class="status-chip">
         <div class="pulse-dot"></div>
-        LIVE CONNECTED
+        LIVE ENGINE CONNECTED
       </div>
     </div>
   </header>
 
   <main>
-    <div class="card">
+    <div class="glass-card">
       <canvas id="particle-canvas"></canvas>
-      <div class="card-title">
-        <span>⚡ Live Crowd Feature Poll</span>
-        <span class="total-pill" id="total-count">0 Total Votes</span>
+      <div class="card-header">
+        <h2>⚡ Live Feature Leaderboard</h2>
+        <span class="total-badge" id="total-count">0 Total Votes</span>
       </div>
 
       <div class="bars-container">
         <div class="bar-item">
-          <div class="bar-label">
+          <div class="bar-meta">
             <span style="color: var(--color-routing);">⚡ File-based Routing</span>
-            <span id="count-routing">0 (0%)</span>
+            <span id="count-routing" style="font-family:'JetBrains Mono';">0 (0%)</span>
           </div>
           <div class="bar-track">
-            <div id="bar-routing" class="bar-fill" style="background: var(--color-routing); color: var(--color-routing);"></div>
+            <div id="bar-routing" class="bar-fill bar-routing"></div>
           </div>
         </div>
 
         <div class="bar-item">
-          <div class="bar-label">
+          <div class="bar-meta">
             <span style="color: var(--color-security);">🛡️ Built-in Security</span>
-            <span id="count-security">0 (0%)</span>
+            <span id="count-security" style="font-family:'JetBrains Mono';">0 (0%)</span>
           </div>
           <div class="bar-track">
-            <div id="bar-security" class="bar-fill" style="background: var(--color-security); color: var(--color-security);"></div>
+            <div id="bar-security" class="bar-fill bar-security"></div>
           </div>
         </div>
 
         <div class="bar-item">
-          <div class="bar-label">
-            <span style="color: var(--color-speed);">🚀 1ms Latency</span>
-            <span id="count-speed">0 (0%)</span>
+          <div class="bar-meta">
+            <span style="color: var(--color-speed);">🚀 1ms Latency Engine</span>
+            <span id="count-speed" style="font-family:'JetBrains Mono';">0 (0%)</span>
           </div>
           <div class="bar-track">
-            <div id="bar-speed" class="bar-fill" style="background: var(--color-speed); color: var(--color-speed);"></div>
+            <div id="bar-speed" class="bar-fill bar-speed"></div>
           </div>
         </div>
 
         <div class="bar-item">
-          <div class="bar-label">
-            <span style="color: var(--color-console);">💻 Dev Console</span>
-            <span id="count-console">0 (0%)</span>
+          <div class="bar-meta">
+            <span style="color: var(--color-console);">💻 Dev Console & Tools</span>
+            <span id="count-console" style="font-family:'JetBrains Mono';">0 (0%)</span>
           </div>
           <div class="bar-track">
-            <div id="bar-console" class="bar-fill" style="background: var(--color-console); color: var(--color-console);"></div>
+            <div id="bar-console" class="bar-fill bar-console"></div>
           </div>
         </div>
       </div>
 
-      <div class="log-feed" id="log-feed">
-        <div class="log-entry">⚡ System Ready. Waiting for smartphone votes via SSE stream...</div>
+      <div class="terminal-feed" id="log-feed">
+        <div class="log-line"><span class="log-time">[SYSTEM]</span> ⚡ Sub-millisecond SSE stream initialized. Awaiting smartphone votes...</div>
       </div>
     </div>
 
-    <div class="card qr-card">
-      <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">📱 Scan to Vote Live</h2>
-      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem;">Point your smartphone camera at the QR code below to cast your vote instantly!</p>
+    <div class="glass-card qr-card">
+      <h2 style="margin:0 0 0.5rem 0;font-family:'Outfit';font-size:1.6rem;font-weight:800;">📱 Scan to Vote Live</h2>
+      <p style="color:var(--text-sub);font-size:0.92rem;margin-bottom:1.5rem;line-height:1.4;">Point your phone camera at the QR code below to cast your vote live on screen!</p>
       
       <div class="qr-frame">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(voteUrl)}" alt="Vote QR Code" />
       </div>
 
-      <div class="url-box">${voteUrl}</div>
-      <p style="color: #64748b; font-size: 0.75rem; margin-top: 1rem;">Powered by Zerra Sub-Millisecond SSE Engine</p>
+      <div class="url-chip">
+        <span>🔗</span>
+        <span>${voteUrl}</span>
+      </div>
+      <p style="color:#64748b;font-size:0.78rem;margin-top:1.25rem;letter-spacing:0.5px;">POWERED BY ZERRA CORE v1.3.1</p>
     </div>
   </main>
 
@@ -1671,7 +1767,7 @@ function startServer(port = 3000) {
 
     function toggleAudio() {
       soundEnabled = !soundEnabled;
-      document.getElementById('audio-btn').innerText = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+      document.getElementById('audio-btn').innerText = soundEnabled ? '🔊 Audio FX: ON' : '🔇 Audio FX: OFF';
     }
 
     function playBlipSound() {
@@ -1704,12 +1800,12 @@ function startServer(port = 3000) {
     resizeCanvas();
 
     function triggerParticles(colorHex) {
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 35; i++) {
         particles.push({
           x: canvas.width / 2,
           y: canvas.height / 2,
-          vx: (Math.random() - 0.5) * 12,
-          vy: (Math.random() - 0.5) * 12,
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.5) * 14,
           size: Math.random() * 6 + 3,
           color: colorHex,
           alpha: 1
@@ -1742,10 +1838,10 @@ function startServer(port = 3000) {
 
     const evtSource = new EventSource('/__zerra/expo/api/stream');
     const colors = {
-      routing: '#818cf8',
-      security: '#34d399',
-      speed: '#f472b6',
-      console: '#fbbf24'
+      routing: '#6366f1',
+      security: '#10b981',
+      speed: '#ec4899',
+      console: '#f59e0b'
     };
 
     evtSource.onmessage = function(e) {
@@ -1767,7 +1863,7 @@ function startServer(port = 3000) {
 
         if (data.lastVote) {
           playBlipSound();
-          triggerParticles(colors[data.lastVote] || '#818cf8');
+          triggerParticles(colors[data.lastVote] || '#6366f1');
           const barEl = document.getElementById('bar-' + data.lastVote);
           if (barEl) {
             barEl.classList.remove('pulse-anim');
@@ -1777,8 +1873,8 @@ function startServer(port = 3000) {
 
           const feed = document.getElementById('log-feed');
           const entry = document.createElement('div');
-          entry.className = 'log-entry';
-          entry.innerText = '[' + data.timestamp + '] ⚡ New Vote for [' + data.lastVote.toUpperCase() + '] from ' + (data.ip || 'Client') + ' (<1ms latency)';
+          entry.className = 'log-line';
+          entry.innerHTML = '<span class="log-time">[' + data.timestamp + ']</span> <span class="log-badge">VOTE</span> ⚡ New Vote for [' + data.lastVote.toUpperCase() + '] from ' + (data.ip || 'Client') + ' (<1ms latency)';
           feed.insertBefore(entry, feed.firstChild);
           if (feed.children.length > 20) feed.removeChild(feed.lastChild);
         }
