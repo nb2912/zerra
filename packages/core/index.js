@@ -1165,19 +1165,21 @@ function startServer(port = 3000) {
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #030712;
-      --card-bg: rgba(17, 24, 39, 0.7);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #f9fafb;
-      --text-sub: #9ca3af;
+      --bg: #000000;
+      --card-bg: rgba(12, 12, 18, 0.9);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #ffffff;
+      --text-sub: #a1a1aa;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
+      background-color: #000000;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.2) 0px, transparent 60%),
-        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 60%);
+        radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 30px 30px, 30px 30px;
       color: var(--text);
       margin: 0;
       padding: 1.25rem;
@@ -1195,23 +1197,23 @@ function startServer(port = 3000) {
       align-items: center;
       gap: 6px;
       background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      border: 1px solid rgba(99, 102, 241, 0.4);
       color: #818cf8;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 9999px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.5px;
       margin-bottom: 0.75rem;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
     }
     .header h1 {
       margin: 0;
-      font-size: 1.85rem;
+      font-size: 1.9rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     }
     .header p {
       color: var(--text-sub);
@@ -1222,60 +1224,54 @@ function startServer(port = 3000) {
     .options-grid {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.1rem;
       flex-grow: 1;
       justify-content: center;
     }
     .option-card {
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 1.25rem 1.5rem;
+      padding: 1.35rem 1.5rem;
       display: flex;
       align-items: center;
       gap: 1.25rem;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
       position: relative;
       overflow: hidden;
-    }
-    .option-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      border-radius: 20px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
     }
     .option-card:active {
       transform: scale(0.96);
     }
-    .option-card.card-routing:active { background: rgba(99, 102, 241, 0.2); border-color: #6366f1; }
-    .option-card.card-security:active { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
-    .option-card.card-speed:active { background: rgba(236, 72, 153, 0.2); border-color: #ec4899; }
-    .option-card.card-console:active { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; }
+    .option-card.card-routing { border-left: 4px solid #6366f1; }
+    .option-card.card-security { border-left: 4px solid #10b981; }
+    .option-card.card-speed { border-left: 4px solid #ec4899; }
+    .option-card.card-console { border-left: 4px solid #f59e0b; }
+
+    .option-card.card-routing:active { background: rgba(99, 102, 241, 0.25); border-color: #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); }
+    .option-card.card-security:active { background: rgba(16, 185, 129, 0.25); border-color: #10b981; box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); }
+    .option-card.card-speed:active { background: rgba(236, 72, 153, 0.25); border-color: #ec4899; box-shadow: 0 0 25px rgba(236, 72, 153, 0.4); }
+    .option-card.card-console:active { background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
 
     .icon-ring {
-      width: 54px;
-      height: 54px;
+      width: 56px;
+      height: 56px;
       border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
+      font-size: 1.65rem;
       flex-shrink: 0;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      background: #000000;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
-    .card-routing .icon-ring { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2)); border: 1px solid rgba(99, 102, 241, 0.3); }
-    .card-security .icon-ring { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(20, 184, 166, 0.2)); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .card-speed .icon-ring { background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2)); border: 1px solid rgba(236, 72, 153, 0.3); }
-    .card-console .icon-ring { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2)); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .card-routing .icon-ring { border: 1px solid rgba(99, 102, 241, 0.5); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+    .card-security .icon-ring { border: 1px solid rgba(16, 185, 129, 0.5); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+    .card-speed .icon-ring { border: 1px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 15px rgba(236, 72, 153, 0.2); }
+    .card-console .icon-ring { border: 1px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
 
     .info h3 {
       margin: 0 0 4px 0;
@@ -1293,15 +1289,14 @@ function startServer(port = 3000) {
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(120px);
-      background: rgba(17, 24, 39, 0.95);
-      backdrop-filter: blur(20px);
+      background: #09090b;
       border: 1px solid #10b981;
       color: white;
       padding: 14px 24px;
       border-radius: 9999px;
       font-weight: 700;
       font-size: 0.9rem;
-      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       z-index: 1000;
       pointer-events: none;
@@ -1316,7 +1311,7 @@ function startServer(port = 3000) {
     footer {
       text-align: center;
       font-size: 0.75rem;
-      color: #6b7280;
+      color: #52525b;
       margin-top: 1.5rem;
       letter-spacing: 0.5px;
     }
@@ -1324,7 +1319,7 @@ function startServer(port = 3000) {
 </head>
 <body>
   <div class="header">
-    <div class="badge-pill">🚀 ZERRA EXPO POLL</div>
+    <div class="badge-pill">⚡ ZERRA EXPO POLL</div>
     <h1>What makes Zerra awesome?</h1>
     <p>Tap any feature below to trigger a live reaction on the main booth display!</p>
   </div>
@@ -1412,11 +1407,11 @@ function startServer(port = 3000) {
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #030712;
-      --card-bg: rgba(17, 24, 39, 0.65);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #f9fafb;
-      --text-sub: #9ca3af;
+      --bg: #000000;
+      --card-bg: rgba(10, 10, 15, 0.9);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #ffffff;
+      --text-sub: #a1a1aa;
       --color-routing: #6366f1;
       --color-security: #10b981;
       --color-speed: #ec4899;
@@ -1425,12 +1420,13 @@ function startServer(port = 3000) {
     * { box-sizing: border-box; }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
+      background-color: #000000;
       background-image: 
-        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.18) 0px, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.15) 0px, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
-      background-attachment: fixed;
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0px, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.12) 0px, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
       color: var(--text);
       margin: 0;
       padding: 0;
@@ -1440,8 +1436,7 @@ function startServer(port = 3000) {
       overflow-x: hidden;
     }
     header {
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(20px);
+      background: rgba(0, 0, 0, 0.95);
       border-bottom: 1px solid var(--border);
       padding: 1.25rem 3rem;
       display: flex;
@@ -1471,13 +1466,14 @@ function startServer(port = 3000) {
       align-items: center;
       gap: 8px;
       background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.4);
       color: #34d399;
       padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.8rem;
       font-weight: 700;
       letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
     }
     .pulse-dot {
       width: 8px;
@@ -1504,29 +1500,17 @@ function startServer(port = 3000) {
     }
     @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
     
-    .glass-card {
+    .obsidian-card {
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       border: 1px solid var(--border);
       border-radius: 28px;
       padding: 2.25rem;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
       position: relative;
       overflow: hidden;
-    }
-    .glass-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      border-radius: 28px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
     }
 
     .card-header {
@@ -1544,16 +1528,18 @@ function startServer(port = 3000) {
       display: flex;
       align-items: center;
       gap: 12px;
+      color: #ffffff;
     }
     .total-badge {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+      background: rgba(99, 102, 241, 0.15);
       border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #e2e8f0;
+      color: #a5b4fc;
       padding: 6px 16px;
       border-radius: 9999px;
       font-size: 0.85rem;
       font-weight: 700;
       letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
     }
 
     /* Bars Container */
@@ -1577,32 +1563,33 @@ function startServer(port = 3000) {
       font-weight: 700;
     }
     .bar-track {
-      background: rgba(0, 0, 0, 0.5);
+      background: #000000;
       border: 1px solid var(--border);
-      height: 32px;
-      border-radius: 16px;
+      height: 34px;
+      border-radius: 17px;
       overflow: hidden;
       position: relative;
       padding: 3px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
     }
     .bar-fill {
       height: 100%;
       width: 0%;
-      border-radius: 13px;
+      border-radius: 14px;
       transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
-    .bar-fill.bar-routing { background: linear-gradient(90deg, #6366f1, #06b6d4); box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
-    .bar-fill.bar-security { background: linear-gradient(90deg, #10b981, #14b8a6); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
-    .bar-fill.bar-speed { background: linear-gradient(90deg, #ec4899, #8b5cf6); box-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
-    .bar-fill.bar-console { background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+    .bar-fill.bar-routing { background: linear-gradient(90deg, #6366f1, #06b6d4); box-shadow: 0 0 25px rgba(99, 102, 241, 0.6); }
+    .bar-fill.bar-security { background: linear-gradient(90deg, #10b981, #14b8a6); box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+    .bar-fill.bar-speed { background: linear-gradient(90deg, #ec4899, #8b5cf6); box-shadow: 0 0 25px rgba(236, 72, 153, 0.6); }
+    .bar-fill.bar-console { background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
 
     .bar-fill.pulse-anim {
       animation: flashGlow 0.5s ease-out;
     }
     @keyframes flashGlow {
       0% { filter: brightness(1); transform: scaleY(1); }
-      50% { filter: brightness(2); transform: scaleY(1.15); }
+      50% { filter: brightness(2.2); transform: scaleY(1.15); }
       100% { filter: brightness(1); transform: scaleY(1); }
     }
 
@@ -1611,13 +1598,14 @@ function startServer(port = 3000) {
       text-align: center;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(160deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
+      background: #050508;
+      border: 1px solid var(--border);
     }
     .qr-frame {
       background: #ffffff;
-      padding: 18px;
+      padding: 20px;
       border-radius: 24px;
-      box-shadow: 0 0 50px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 0 60px rgba(99, 102, 241, 0.4);
       display: inline-block;
       margin: 1.5rem 0;
       transition: transform 0.3s ease;
@@ -1632,7 +1620,7 @@ function startServer(port = 3000) {
       border-radius: 8px;
     }
     .url-chip {
-      background: rgba(0, 0, 0, 0.5);
+      background: #000000;
       border: 1px solid var(--border);
       padding: 12px 20px;
       border-radius: 14px;
@@ -1644,6 +1632,7 @@ function startServer(port = 3000) {
       display: inline-flex;
       align-items: center;
       gap: 10px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
 
     /* Log Feed */
@@ -1657,6 +1646,7 @@ function startServer(port = 3000) {
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.82rem;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);
     }
     .log-line {
       color: #34d399;
@@ -1665,7 +1655,7 @@ function startServer(port = 3000) {
       align-items: center;
       gap: 8px;
     }
-    .log-time { color: #64748b; }
+    .log-time { color: #52525b; }
     .log-badge { background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
     canvas {
@@ -1682,7 +1672,7 @@ function startServer(port = 3000) {
       <h1>Zerra<span style="font-weight:300;opacity:0.6;font-size:1.6rem;margin-left:4px;">Expo Showcase</span></h1>
     </div>
     <div style="display:flex;gap:16px;align-items:center;">
-      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:white;padding:8px 18px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
+      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:white;padding:8px 18px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
       <div class="status-chip">
         <div class="pulse-dot"></div>
         LIVE ENGINE CONNECTED
@@ -1691,7 +1681,7 @@ function startServer(port = 3000) {
   </header>
 
   <main>
-    <div class="glass-card">
+    <div class="obsidian-card">
       <canvas id="particle-canvas"></canvas>
       <div class="card-header">
         <h2>⚡ Live Feature Leaderboard</h2>
@@ -1745,8 +1735,8 @@ function startServer(port = 3000) {
       </div>
     </div>
 
-    <div class="glass-card qr-card">
-      <h2 style="margin:0 0 0.5rem 0;font-family:'Outfit';font-size:1.6rem;font-weight:800;">📱 Scan to Vote Live</h2>
+    <div class="obsidian-card qr-card">
+      <h2 style="margin:0 0 0.5rem 0;font-family:'Outfit';font-size:1.6rem;font-weight:800;color:#ffffff;">📱 Scan to Vote Live</h2>
       <p style="color:var(--text-sub);font-size:0.92rem;margin-bottom:1.5rem;line-height:1.4;">Point your phone camera at the QR code below to cast your vote live on screen!</p>
       
       <div class="qr-frame">
@@ -1757,7 +1747,7 @@ function startServer(port = 3000) {
         <span>🔗</span>
         <span>${voteUrl}</span>
       </div>
-      <p style="color:#64748b;font-size:0.78rem;margin-top:1.25rem;letter-spacing:0.5px;">POWERED BY ZERRA CORE v1.3.1</p>
+      <p style="color:#52525b;font-size:0.78rem;margin-top:1.25rem;letter-spacing:0.5px;">POWERED BY ZERRA CORE v1.3.1</p>
     </div>
   </main>
 
