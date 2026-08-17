@@ -61,6 +61,31 @@ function startServer(port = 3000) {
   const recentRequests = [];
   const MAX_LOGS = 20;
 
+  // Expo Mode State & Helpers
+  const expoVotes = { routing: 0, security: 0, speed: 0, console: 0 };
+  const expoClients = new Set();
+  const getLocalIp = () => {
+    try {
+      const interfaces = os.networkInterfaces();
+      for (const name of Object.keys(interfaces)) {
+        for (const net of interfaces[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            return net.address;
+          }
+        }
+      }
+    } catch (e) {}
+    return '127.0.0.1';
+  };
+  const broadcastExpoVotes = (lastVote = null, ip = null) => {
+    const total = Object.values(expoVotes).reduce((a, b) => a + b, 0);
+    const data = JSON.stringify({ votes: expoVotes, total, lastVote, ip, timestamp: new Date().toLocaleTimeString() });
+    for (const client of expoClients) {
+      try { client.write(`data: ${data}\n\n`); } catch (e) { expoClients.delete(client); }
+    }
+  };
+
+
   // 8. Enhanced DX: Auto-load .env files
   if (config.features.dotenv) {
     const envPath = path.join(process.cwd(), '.env');
@@ -766,7 +791,10 @@ function startServer(port = 3000) {
 <body>
   <header>
     <h1>🚀 Zerra<span style="font-weight:300;opacity:0.7;">Console</span></h1>
-    <div class="badge">LIVE ENGINE</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="/__zerra/expo" target="_blank" style="font-size:0.75rem;background:rgba(236,72,153,0.2);color:#f472b6;padding:4px 12px;border-radius:9999px;font-weight:600;text-decoration:none;border:1px solid rgba(236,72,153,0.4);display:flex;align-items:center;gap:6px;">🎪 LAUNCH EXPO MODE</a>
+      <div class="badge">LIVE ENGINE</div>
+    </div>
   </header>
   <main>
     <div class="grid">
@@ -1095,6 +1123,670 @@ function startServer(port = 3000) {
         nodeVersion: process.version,
         framework: 'Zerra'
       });
+    }
+
+    // 13. Enhanced DX: Expo Mode Endpoints
+    if (cleanPath === '/__zerra/expo/api/stream') {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.write('\n');
+      expoClients.add(res);
+      const total = Object.values(expoVotes).reduce((a, b) => a + b, 0);
+      res.write(`data: ${JSON.stringify({ votes: expoVotes, total, timestamp: new Date().toLocaleTimeString() })}\n\n`);
+      req.on('close', () => { expoClients.delete(res); });
+      return;
+    }
+
+    if (cleanPath === '/__zerra/expo/api/vote' && method === 'POST') {
+      const body = req.body || {};
+      const option = body.option;
+      if (option && expoVotes.hasOwnProperty(option)) {
+        expoVotes[option]++;
+        const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').replace(/^.*:/, '');
+        broadcastExpoVotes(option, clientIp);
+        return res.status(200).json({ success: true, option, votes: expoVotes });
+      } else {
+        return res.status(400).json({ error: 'Invalid voting option' });
+      }
+    }
+
+    if (cleanPath === '/__zerra/expo/vote') {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Zerra Expo Poll</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 30, 49, 0.8);
+      --text: #f8fafc;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.25rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin: 0.5rem 0 0 0;
+    }
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex-grow: 1;
+    }
+    .option-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .option-card:active {
+      transform: scale(0.97);
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #818cf8;
+    }
+    .option-icon {
+      font-size: 2.2rem;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .option-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .option-info p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #94a3b8;
+    }
+    #status-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #status-toast.active {
+      transform: translateX(-50%) translateY(0);
+    }
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🚀 Zerra Expo</h1>
+    <p>Tap your favorite feature to vote live on screen!</p>
+  </div>
+  
+  <div class="options-grid">
+    <div class="option-card" onclick="castVote('routing')">
+      <div class="option-icon">⚡</div>
+      <div class="option-info">
+        <h3>File-based Routing</h3>
+        <p>Zero configuration folders, routing perfected.</p>
+      </div>
+    </div>
+    
+    <div class="option-card" onclick="castVote('security')">
+      <div class="option-icon">🛡️</div>
+      <div class="option-info">
+        <h3>Built-in Security</h3>
+        <p>Auto rate-limiting & path traversal protection.</p>
+      </div>
+    </div>
+    
+    <div class="option-card" onclick="castVote('speed')">
+      <div class="option-icon">🚀</div>
+      <div class="option-info">
+        <h3>1ms Latency</h3>
+        <p>Ultra-fast Radix Trie engine under the hood.</p>
+      </div>
+    </div>
+    
+    <div class="option-card" onclick="castVote('console')">
+      <div class="option-icon">💻</div>
+      <div class="option-info">
+        <h3>Dev Console</h3>
+        <p>Built-in interactive playground at /__zerra.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="status-toast">
+    <span>⚡</span> <span id="toast-text">Vote Cast in 0.4ms!</span>
+  </div>
+
+  <footer>Powered by Zerra Core v1.3.1</footer>
+
+  <script>
+    async function castVote(option) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      try {
+        const start = performance.now();
+        const res = await fetch('/__zerra/expo/api/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ option })
+        });
+        const duration = (performance.now() - start).toFixed(1);
+        if (res.ok) {
+          showToast('Vote Cast in ' + duration + 'ms! ⚡ (Watch the Screen)');
+        }
+      } catch (err) {
+        showToast('✖ Network error');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('status-toast');
+      document.getElementById('toast-text').innerText = msg;
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 2500);
+    }
+  </script>
+</body>
+</html>`);
+    }
+
+    if (cleanPath === '/__zerra/expo') {
+      const localIp = getLocalIp();
+      const voteUrl = `http://${localIp}:${port}/__zerra/expo/vote`;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zerra Expo Live Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(18, 26, 43, 0.7);
+      --text: #f8fafc;
+      --border: rgba(255, 255, 255, 0.08);
+      --color-routing: #818cf8;
+      --color-security: #34d399;
+      --color-speed: #f472b6;
+      --color-console: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.12) 0px, transparent 50%);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: linear-gradient(to right, #818cf8, #c084fc, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #34d399;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+    main {
+      flex-grow: 1;
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+    
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 0 0 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .total-pill {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    /* Voting Bars */
+    .bars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex-grow: 1;
+      justify-content: center;
+    }
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .bar-track {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      height: 28px;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 14px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 20px currentColor;
+      position: relative;
+    }
+    .bar-fill.pulse-anim {
+      animation: barGlow 0.4s ease-out;
+    }
+    @keyframes barGlow {
+      0% { filter: brightness(1); transform: scaleY(1); }
+      50% { filter: brightness(1.8); transform: scaleY(1.1); }
+      100% { filter: brightness(1); transform: scaleY(1); }
+    }
+
+    /* QR Code Card */
+    .qr-card {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    }
+    .qr-frame {
+      background: white;
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+      display: inline-block;
+      margin-bottom: 1.5rem;
+    }
+    .qr-frame img {
+      display: block;
+      width: 220px;
+      height: 220px;
+    }
+    .url-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 1rem;
+      color: #38bdf8;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      word-break: break-all;
+    }
+    
+    /* Live Log Feed */
+    .log-feed {
+      margin-top: 1.5rem;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      height: 120px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+    .log-entry {
+      color: #34d399;
+      margin-bottom: 4px;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      border-radius: 24px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>🚀 Zerra<span style="font-weight:300;opacity:0.6;">Expo</span></h1>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button onclick="toggleAudio()" id="audio-btn" style="background:rgba(255,255,255,0.1);border:1px solid var(--border);color:white;padding:6px 14px;border-radius:9999px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔊 Sound: ON</button>
+      <div class="status-badge">
+        <div class="pulse-dot"></div>
+        LIVE CONNECTED
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <canvas id="particle-canvas"></canvas>
+      <div class="card-title">
+        <span>⚡ Live Crowd Feature Poll</span>
+        <span class="total-pill" id="total-count">0 Total Votes</span>
+      </div>
+
+      <div class="bars-container">
+        <div class="bar-item">
+          <div class="bar-label">
+            <span style="color: var(--color-routing);">⚡ File-based Routing</span>
+            <span id="count-routing">0 (0%)</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-routing" class="bar-fill" style="background: var(--color-routing); color: var(--color-routing);"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">
+            <span style="color: var(--color-security);">🛡️ Built-in Security</span>
+            <span id="count-security">0 (0%)</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-security" class="bar-fill" style="background: var(--color-security); color: var(--color-security);"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">
+            <span style="color: var(--color-speed);">🚀 1ms Latency</span>
+            <span id="count-speed">0 (0%)</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-speed" class="bar-fill" style="background: var(--color-speed); color: var(--color-speed);"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">
+            <span style="color: var(--color-console);">💻 Dev Console</span>
+            <span id="count-console">0 (0%)</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-console" class="bar-fill" style="background: var(--color-console); color: var(--color-console);"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="log-feed" id="log-feed">
+        <div class="log-entry">⚡ System Ready. Waiting for smartphone votes via SSE stream...</div>
+      </div>
+    </div>
+
+    <div class="card qr-card">
+      <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">📱 Scan to Vote Live</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem;">Point your smartphone camera at the QR code below to cast your vote instantly!</p>
+      
+      <div class="qr-frame">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(voteUrl)}" alt="Vote QR Code" />
+      </div>
+
+      <div class="url-box">${voteUrl}</div>
+      <p style="color: #64748b; font-size: 0.75rem; margin-top: 1rem;">Powered by Zerra Sub-Millisecond SSE Engine</p>
+    </div>
+  </main>
+
+  <script>
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('audio-btn').innerText = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+    }
+
+    function playBlipSound() {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerParticles(colorHex) {
+      for (let i = 0; i < 30; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          vx: (Math.random() - 0.5) * 12,
+          vy: (Math.random() - 0.5) * 12,
+          size: Math.random() * 6 + 3,
+          color: colorHex,
+          alpha: 1
+        });
+      }
+    }
+
+    function renderParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.02;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(renderParticles);
+    }
+    renderParticles();
+
+    const evtSource = new EventSource('/__zerra/expo/api/stream');
+    const colors = {
+      routing: '#818cf8',
+      security: '#34d399',
+      speed: '#f472b6',
+      console: '#fbbf24'
+    };
+
+    evtSource.onmessage = function(e) {
+      try {
+        const data = JSON.parse(e.data);
+        const votes = data.votes || { routing: 0, security: 0, speed: 0, console: 0 };
+        const total = data.total || 0;
+
+        document.getElementById('total-count').innerText = total + ' Total Votes';
+
+        ['routing', 'security', 'speed', 'console'].forEach(opt => {
+          const count = votes[opt] || 0;
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          const fillEl = document.getElementById('bar-' + opt);
+          
+          fillEl.style.width = pct + '%';
+          document.getElementById('count-' + opt).innerText = count + ' (' + pct + '%)';
+        });
+
+        if (data.lastVote) {
+          playBlipSound();
+          triggerParticles(colors[data.lastVote] || '#818cf8');
+          const barEl = document.getElementById('bar-' + data.lastVote);
+          if (barEl) {
+            barEl.classList.remove('pulse-anim');
+            void barEl.offsetWidth;
+            barEl.classList.add('pulse-anim');
+          }
+
+          const feed = document.getElementById('log-feed');
+          const entry = document.createElement('div');
+          entry.className = 'log-entry';
+          entry.innerText = `[\${data.timestamp}] ⚡ New Vote for [\${data.lastVote.toUpperCase()}] from \${data.ip || 'Client'} (<1ms latency)`;
+          feed.insertBefore(entry, feed.firstChild);
+          if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+        }
+      } catch (err) {}
+    };
+  </script>
+</body>
+</html>`);
     }
 
     let filePath = null;
