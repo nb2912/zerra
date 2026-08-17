@@ -1759,7 +1759,7 @@ function startServer(port = 3000) {
         <span style="color:#a1a1aa;">🔗</span>
         <span>${voteUrl}</span>
       </div>
-      <p style="color:#71717a;font-size:0.78rem;margin-top:1.5rem;font-family:'JetBrains Mono', monospace;">POWERED BY ZERRA CORE v1.3.1</p>
+      <p style="color:#71717a;font-size:0.78rem;margin-top:1.5rem;font-family:'JetBrains Mono', monospace;"></p>
     </div>
   </main>
 
