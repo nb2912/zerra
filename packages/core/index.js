@@ -1681,7 +1681,6 @@ function startServer(port = 3000) {
     <div class="brand">
       <div class="brand-logo">Z</div>
       <h1>Zerra</h1>
-      <span class="expo-tag">EXPO SHOWCASE</span>
     </div>
     <div style="display:flex;gap:16px;align-items:center;">
       <button onclick="toggleAudio()" id="audio-btn" style="background:transparent;border:1px solid var(--border);color:#fafafa;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.82rem;transition:all 0.2s;">🔊 Audio FX: ON</button>
