@@ -21,12 +21,13 @@
   "overrides": {
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "postcss": "8.5.14",
+    "postcss": "8.5.23",
     "next": {
-      "postcss": "8.5.14"
+      "postcss": "8.5.23"
     }
   },
   "dependencies": {
-    "postcss": "8.5.14"
+    "next": "^15.5.23",
+    "postcss": "8.5.23"
   }
 }
