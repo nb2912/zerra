@@ -1,19 +1,19 @@
 version: 1
 applications:
-  - appRoot: packages/docs
-    frontend:
+  - frontend:
       phases:
         preBuild:
           commands:
-            - rm -rf .next
-            - npm ci
+            - rm -rf packages/docs/.next
+            - npm ci --no-audit --no-fund
         build:
           commands:
-            - npm run build
+            - npm run build -w packages/docs
       artifacts:
-        baseDirectory: out
+        baseDirectory: packages/docs/out
         files:
           - '**/*'
       cache:
         paths:
-          - .next/cache/**/*
+          - packages/docs/.next/cache/**/*
+          - node_modules/**/*
