@@ -31,7 +31,7 @@ export default function CliDocs() {
         <ul className="grid md:grid-cols-2 gap-4 list-none p-0">
           <li className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 text-sm text-zinc-400">
             <strong className="text-white block mb-1">Database Selection</strong>
-            SQL, MongoDB, Supabase, Firebase, or No-DB.
+            SQL, MongoDB, Supabase, Firebase, DynamoDB (AWS), or No-DB.
           </li>
           <li className="p-4 rounded-xl border border-white/5 bg-zinc-900/30 text-sm text-zinc-400">
             <strong className="text-white block mb-1">Language Choice</strong>
@@ -46,6 +46,45 @@ export default function CliDocs() {
             Optionally initialize a Git repository automatically.
           </li>
         </ul>
+      </section>
+
+      <section id="add" className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">add &lt;feature&gt;</h2>
+        <p className="text-zinc-400">
+          Retroactively add or switch a module (database, auth, storage) in an existing project. Supported features include <code className="text-white">database</code>, <code className="text-white">auth</code>, and <code className="text-white">storage</code>.
+        </p>
+        <div className="bg-zinc-900 rounded-xl border border-white/5 p-6 font-mono text-sm group relative">
+          <code className="text-blue-400">npx</code> <code className="text-white">zerra add database</code>
+          <div className="absolute top-4 right-4">
+            <CopyButton text="npx zerra add database" />
+          </div>
+        </div>
+      </section>
+
+      <section id="generate" className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">generate &lt;type&gt; &lt;name&gt;</h2>
+        <p className="text-zinc-400">
+          Scaffold a new route, middleware, job, guard, or transform quickly.
+        </p>
+        <div className="bg-zinc-900 rounded-xl border border-white/5 p-6 font-mono text-sm group relative">
+          <code className="text-blue-400">npx</code> <code className="text-white">zerra generate route users</code>
+          <div className="absolute top-4 right-4">
+            <CopyButton text="npx zerra generate route users" />
+          </div>
+        </div>
+      </section>
+
+      <section id="deploy" className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">deploy</h2>
+        <p className="text-zinc-400">
+          Deploy your Zerra app to AWS Lambda + API Gateway using AWS SAM.
+        </p>
+        <div className="bg-zinc-900 rounded-xl border border-white/5 p-6 font-mono text-sm group relative">
+          <code className="text-blue-400">npx</code> <code className="text-white">zerra deploy</code>
+          <div className="absolute top-4 right-4">
+            <CopyButton text="npx zerra deploy" />
+          </div>
+        </div>
       </section>
 
       <section id="scripts" className="flex flex-col gap-6">

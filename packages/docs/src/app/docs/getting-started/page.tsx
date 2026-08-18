@@ -69,7 +69,7 @@ export default function GettingStarted() {
           className="p-6 rounded-2xl border border-border bg-foreground/5 hover:bg-foreground/10 transition-all group"
         >
           <h4 className="font-bold mb-2 text-foreground">Database Setup</h4>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Configure PostgreSQL, MongoDB, or Supabase.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Configure PostgreSQL, MongoDB, DynamoDB, or Supabase.</p>
           <div className="mt-4 text-foreground text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             Connect Database →
           </div>
