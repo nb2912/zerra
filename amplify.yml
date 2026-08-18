@@ -1,19 +1,19 @@
 version: 1
 applications:
-  - frontend:
+  - appRoot: packages/docs
+    frontend:
       phases:
         preBuild:
           commands:
-            - rm -rf packages/docs/.next
-            - npm ci --no-audit --no-fund
+            - rm -rf .next
+            - npm ci --prefix ../../ --no-audit --no-fund
         build:
           commands:
-            - npm run build -w packages/docs
+            - env NEXT_TELEMETRY_DISABLED=1 npm run build
       artifacts:
-        baseDirectory: packages/docs/out
+        baseDirectory: out
         files:
           - '**/*'
       cache:
         paths:
-          - packages/docs/.next/cache/**/*
-          - node_modules/**/*
+          - .next/cache/**/*
