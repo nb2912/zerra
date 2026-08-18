@@ -11,7 +11,7 @@ applications:
           commands:
             - env NEXT_TELEMETRY_DISABLED=1 npm run build
       artifacts:
-        baseDirectory: out
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
