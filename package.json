@@ -7,7 +7,9 @@
     "dev": "node --watch dev.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "publish:all": "cd packages/core && npm publish --access public && cd ../cli && npm publish --access public",
-    "docs:dev": "npm run dev -w packages/docs"
+    "docs:dev": "npm run dev -w packages/docs",
+    "docs:build": "npm run build -w packages/docs",
+    "docs:deploy": "npm run docs:build && echo \"Uploading to S3...\" && aws s3 sync packages/docs/out/ s3://$DOCS_BUCKET --delete && echo \"Invalidating CloudFront cache...\" && aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths \"/*\""
   },
   "keywords": [],
   "author": "",

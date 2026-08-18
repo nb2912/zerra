@@ -64,7 +64,7 @@ program
 // ─── Add command (Database / Auth injection) ───
 program
   .command("add <feature>")
-  .description("Add or switch a module (database, auth) in an existing project")
+  .description("Add or switch a module (database, auth, storage) in an existing project")
   .action(async (feature) => {
     const projectRoot = findUp("zerra.config.json") ? path.dirname(findUp("zerra.config.json")) : (findUp("package.json") ? path.dirname(findUp("package.json")) : process.cwd());
     const isTs = !!findUp("tsconfig.json", projectRoot);
@@ -75,6 +75,7 @@ program
         { type: "list", name: "dbType", message: "Select the database to add/switch to:", choices: [
           { name: "SQL (Postgres/MySQL)", value: "js-sql" },
           { name: "MongoDB", value: "js-mongo" },
+          { name: "DynamoDB (AWS)", value: "js-dynamodb" },
           { name: "Supabase", value: "js-supabase" },
           { name: "Firebase", value: "js-firebase" }
         ]}
@@ -147,8 +148,79 @@ program
 
       console.log(`✔ Auth starter successfully added!`);
       console.log(`👉 Don't forget to run 'npm install' to install auth dependencies (jsonwebtoken, bcrypt).`);
+
+    } else if (feature === "storage") {
+      const s3TemplatePath = path.join(__dirname, "templates", "js-s3");
+      console.log(`\n☁️  Injecting AWS S3 Storage integration...`);
+      await fs.copy(s3TemplatePath, projectRoot, { overwrite: true, filter: (src) => !src.endsWith("package.json") });
+
+      const s3PkgPath = path.join(s3TemplatePath, "package.json");
+      const targetPkgPath = path.join(projectRoot, "package.json");
+      if (fs.existsSync(s3PkgPath) && fs.existsSync(targetPkgPath)) {
+        const basePkg = await fs.readJson(targetPkgPath);
+        const s3Pkg = await fs.readJson(s3PkgPath);
+        basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(s3Pkg.dependencies || {}) };
+        await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
+      }
+
+      // Auto-enable multipart feature in zerra.config.json (required for file uploads)
+      const configPath = path.join(projectRoot, "zerra.config.json");
+      if (fs.existsSync(configPath)) {
+        try {
+          const config = await fs.readJson(configPath);
+          if (config.features && !config.features.multipart) {
+            config.features.multipart = true;
+            await fs.writeJson(configPath, config, { spaces: 2 });
+            console.log(`   ✔ Auto-enabled 'multipart' feature in zerra.config.json`);
+          }
+        } catch (e) {}
+      }
+
+      if (isTs) {
+        const convertToTs = async (dir) => {
+          if (fs.existsSync(dir)) {
+            const files = await fs.readdir(dir);
+            for (const file of files) {
+              if (file.endsWith(".js")) await fs.move(path.join(dir, file), path.join(dir, file.replace(/\.js$/, ".ts")), { overwrite: true });
+            }
+          }
+        };
+        await convertToTs(path.join(projectRoot, "services"));
+        await convertToTs(path.join(projectRoot, "api"));
+      }
+
+      // Inject .env hints
+      const envPath = path.join(projectRoot, ".env");
+      const envHints = [
+        '', '# ─── AWS S3 Storage ───',
+        'AWS_REGION=us-east-1',
+        'AWS_ACCESS_KEY_ID=',
+        'AWS_SECRET_ACCESS_KEY=',
+        'S3_BUCKET=',
+        'S3_PREFIX=uploads/',
+      ].join('\n');
+      if (fs.existsSync(envPath)) {
+        const existing = fs.readFileSync(envPath, 'utf8');
+        if (!existing.includes('S3_BUCKET')) {
+          fs.appendFileSync(envPath, '\n' + envHints + '\n');
+          console.log(`   ✔ Appended S3 env variables to .env`);
+        }
+      } else {
+        fs.writeFileSync(envPath, envHints.trim() + '\n');
+        console.log(`   ✔ Created .env with S3 configuration`);
+      }
+
+      console.log(`\n✔ AWS S3 Storage successfully added!`);
+      console.log(`   📂 services/storage.js — S3 client with upload/presign/delete`);
+      console.log(`   📂 api/upload.js       — File upload & download endpoints`);
+      console.log(`   📂 api/presign.js      — Direct browser-to-S3 upload URLs`);
+      console.log(`\n👉 Next steps:`);
+      console.log(`   1. Run 'npm install' to install the AWS SDK`);
+      console.log(`   2. Set your S3_BUCKET and AWS credentials in .env`);
+      console.log(`   3. POST a file to /upload to test it!\n`);
+
     } else {
-      console.error(`✖ Unknown feature '${feature}'. Use 'database' or 'auth'.`);
+      console.error(`✖ Unknown feature '${feature}'. Use 'database', 'auth', or 'storage'.`);
     }
   });
 
@@ -212,6 +284,40 @@ async function scaffoldProject(projectName, answers) {
     }
   }
 
+  // 3b. Overlay S3 Storage
+  if (answers.includeStorage) {
+    const s3TemplatePath = path.join(__dirname, "templates", "js-s3");
+    if (fs.existsSync(s3TemplatePath)) {
+      console.log(`   ☁️  Adding AWS S3 Storage...`);
+      await fs.copy(s3TemplatePath, targetPath, {
+        overwrite: true,
+        filter: (src) => !src.endsWith("package.json"),
+      });
+
+      const s3PkgPath = path.join(s3TemplatePath, "package.json");
+      const targetPkgPath = path.join(targetPath, "package.json");
+
+      if (fs.existsSync(s3PkgPath) && fs.existsSync(targetPkgPath)) {
+        const basePkg = await fs.readJson(targetPkgPath);
+        const s3Pkg = await fs.readJson(s3PkgPath);
+        basePkg.dependencies = { ...(basePkg.dependencies || {}), ...(s3Pkg.dependencies || {}) };
+        await fs.writeJson(targetPkgPath, basePkg, { spaces: 2 });
+      }
+
+      // Create .env with S3 hints
+      const envPath = path.join(targetPath, ".env");
+      const envHints = '# ─── AWS S3 Storage ───\nAWS_REGION=us-east-1\nAWS_ACCESS_KEY_ID=\nAWS_SECRET_ACCESS_KEY=\nS3_BUCKET=\nS3_PREFIX=uploads/\n';
+      if (fs.existsSync(envPath)) {
+        const existing = fs.readFileSync(envPath, 'utf8');
+        if (!existing.includes('S3_BUCKET')) {
+          fs.appendFileSync(envPath, '\n' + envHints);
+        }
+      } else {
+        fs.writeFileSync(envPath, envHints);
+      }
+    }
+  }
+
   // 4. Customize project name in package.json
   const pkgPath = path.join(targetPath, "package.json");
   if (fs.existsSync(pkgPath)) {
@@ -267,6 +373,10 @@ async function scaffoldProject(projectName, answers) {
   const allFeatureKeys = ['logging','dynamicRouting','middleware','dotenv','validation','multipart','errors','dashboard','static','rateLimiting','cron','guards','transforms'];
   const featureConfig = {};
   allFeatureKeys.forEach(k => { featureConfig[k] = answers.features.includes(k); });
+  // Auto-enable multipart if S3 storage is included
+  if (answers.includeStorage && !featureConfig.multipart) {
+    featureConfig.multipart = true;
+  }
   await fs.writeJson(path.join(targetPath, 'zerra.config.json'), { features: featureConfig, plugins: [] }, { spaces: 2 });
 
   // 7. Generate .gitignore
@@ -310,13 +420,15 @@ program
       const answers = await inquirer.prompt([
         { type: "list", name: "database", message: "Database?", choices: [
           { name: "None", value: "js-base" }, { name: "SQL", value: "js-sql" },
-          { name: "MongoDB", value: "js-mongo" }, { name: "Supabase", value: "js-supabase" },
+          { name: "MongoDB", value: "js-mongo" }, { name: "DynamoDB (AWS)", value: "js-dynamodb" },
+          { name: "Supabase", value: "js-supabase" },
           { name: "Firebase", value: "js-firebase" }
         ]},
         { type: "list", name: "language", message: "Language?", choices: [
           { name: "JavaScript", value: "js" }, { name: "TypeScript", value: "ts" }
         ]},
         { type: "confirm", name: "includeAuth", message: "Include Auth?", default: true },
+        { type: "confirm", name: "includeStorage", message: "Include AWS S3 Storage?", default: false },
         { type: "checkbox", name: "features", message: "Features:", choices: [
           { name: "Logging", value: "logging", checked: true },
           { name: "Dynamic Routing", value: "dynamicRouting", checked: true },
@@ -402,6 +514,199 @@ program
 
     // Graceful shutdown on Ctrl+C
     process.on("SIGINT", () => { server.close(); process.exit(0); });
+  });
+
+// ─── Deploy command — AWS Lambda + API Gateway ───
+program
+  .command("deploy")
+  .description("Deploy your Zerra app to AWS Lambda + API Gateway")
+  .option("--init", "Generate deployment config files without deploying")
+  .option("--stack-name <name>", "CloudFormation stack name")
+  .option("--region <region>", "AWS region", "us-east-1")
+  .option("--stage <stage>", "Deployment stage", "prod")
+  .option("--single", "Deploy as a single catch-all Lambda (default)")
+  .action(async (opts) => {
+    const projectRoot = findUp("zerra.config.json") ? path.dirname(findUp("zerra.config.json")) : (findUp("package.json") ? path.dirname(findUp("package.json")) : process.cwd());
+    const pkgPath = path.join(projectRoot, "package.json");
+    const pkg = fs.existsSync(pkgPath) ? fs.readJsonSync(pkgPath) : { name: 'zerra-app' };
+    const stackName = opts.stackName || pkg.name.replace(/[^a-zA-Z0-9-]/g, '-') || 'zerra-app';
+    const region = opts.region;
+    const stage = opts.stage;
+
+    // Discover routes for logging
+    const apiDir = path.join(projectRoot, 'api');
+    const discoverRoutes = (dir, base = '') => {
+      let routes = [];
+      if (!fs.existsSync(dir)) return routes;
+      fs.readdirSync(dir).forEach(file => {
+        const fp = path.join(dir, file);
+        const stat = fs.statSync(fp);
+        if (stat.isDirectory()) {
+          routes = routes.concat(discoverRoutes(fp, path.join(base, file)));
+        } else if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.startsWith('_')) {
+          const route = path.join(base, file).replace(/\\\\/g, '/').replace(/\\.(js|ts)$/, '');
+          routes.push('/' + (route === 'index' ? '' : route));
+        }
+      });
+      return routes;
+    };
+
+    const routes = discoverRoutes(apiDir);
+
+    // ─── Generate Lambda handler entry point ───
+    const handlerContent = `// Auto-generated by 'zerra deploy' — DO NOT EDIT\nconst { createLambdaHandler } = require('zerra-core/lambda');\nexports.handler = createLambdaHandler();\n`;
+
+    // ─── Generate SAM template ───
+    const samTemplate = {
+      AWSTemplateFormatVersion: '2010-09-09',
+      Transform: 'AWS::Serverless-2016-10-31',
+      Description: `Zerra App: ${stackName} (deployed via zerra deploy)`,
+      Globals: {
+        Function: {
+          Timeout: 30,
+          MemorySize: 256,
+          Runtime: 'nodejs20.x',
+          Environment: {
+            Variables: {
+              NODE_ENV: 'production',
+              STAGE: stage,
+            },
+          },
+        },
+      },
+      Resources: {
+        ZerraFunction: {
+          Type: 'AWS::Serverless::Function',
+          Properties: {
+            Handler: 'lambda_handler.handler',
+            CodeUri: './',
+            Description: 'Zerra catch-all Lambda handler',
+            Events: {
+              CatchAll: {
+                Type: 'HttpApi',
+                Properties: {
+                  Path: '/{proxy+}',
+                  Method: 'ANY',
+                },
+              },
+              Root: {
+                Type: 'HttpApi',
+                Properties: {
+                  Path: '/',
+                  Method: 'ANY',
+                },
+              },
+            },
+            Policies: [
+              'AmazonDynamoDBFullAccess',
+              'AmazonS3FullAccess',
+              'AmazonSSMReadOnlyAccess',
+            ],
+          },
+        },
+      },
+      Outputs: {
+        ApiUrl: {
+          Description: 'API Gateway URL',
+          Value: { 'Fn::Sub': 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com' },
+        },
+      },
+    };
+
+    // ─── Generate samconfig.toml ───
+    const samConfig = `# Auto-generated by 'zerra deploy'\nversion = 0.1\n\n[default.deploy.parameters]\nstack_name = "${stackName}"\nregion = "${region}"\ns3_prefix = "${stackName}"\nconfirm_changeset = false\ncapabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"\nresolve_s3 = true\n`;
+
+    // ─── Generate .aws-sam ignore ───
+    const samIgnore = `# Ignore dev-only files during packaging\nnode_modules/@types\n.git\n.gitignore\npackages/docs\npackages/cli\n*.md\n.env.local\n.env.*.local\ndev.js\n`;
+
+    if (opts.init) {
+      // --init mode: just generate files
+      console.log(`\n  ⚡ \x1b[1m\x1b[35mZerra Deploy Init\x1b[0m\n`);
+
+      fs.writeFileSync(path.join(projectRoot, 'lambda_handler.js'), handlerContent);
+      console.log(`  ✔ Created lambda_handler.js`);
+
+      // Write SAM template as YAML-ish (using JSON for simplicity — SAM accepts JSON)
+      fs.writeFileSync(path.join(projectRoot, 'template.json'), JSON.stringify(samTemplate, null, 2));
+      console.log(`  ✔ Created template.json (SAM/CloudFormation)`);
+
+      fs.writeFileSync(path.join(projectRoot, 'samconfig.toml'), samConfig);
+      console.log(`  ✔ Created samconfig.toml`);
+
+      fs.writeFileSync(path.join(projectRoot, '.samignore'), samIgnore);
+      console.log(`  ✔ Created .samignore`);
+
+      console.log(`\n  📋 Discovered ${routes.length} route(s):`);
+      routes.forEach(r => console.log(`     ${r}`));
+
+      console.log(`\n  👉 Next steps:`);
+      console.log(`     1. Install AWS SAM CLI: https://docs.aws.amazon.com/sam/latest/userguide/install-sam-cli.html`);
+      console.log(`     2. Configure AWS credentials: aws configure`);
+      console.log(`     3. Run: sam build && sam deploy`);
+      console.log(`     Or just run: npx zerra deploy\n`);
+      return;
+    }
+
+    // ─── Full deploy mode ───
+    const { execSync } = require('child_process');
+
+    // Check for SAM CLI
+    try {
+      execSync('sam --version', { stdio: 'pipe' });
+    } catch (e) {
+      console.error(`\n  ✖ AWS SAM CLI is not installed.`);
+      console.error(`  Install it: https://docs.aws.amazon.com/sam/latest/userguide/install-sam-cli.html`);
+      console.error(`  Or run 'npx zerra deploy --init' to generate files for manual deployment.\n`);
+      return;
+    }
+
+    console.log(`\n  🚀 \x1b[1m\x1b[35mZerra Deploy\x1b[0m`);
+    console.log(`  \x1b[2mTarget: AWS Lambda + API Gateway (${region})\x1b[0m\n`);
+
+    // Write deployment files
+    fs.writeFileSync(path.join(projectRoot, 'lambda_handler.js'), handlerContent);
+    fs.writeFileSync(path.join(projectRoot, 'template.json'), JSON.stringify(samTemplate, null, 2));
+    fs.writeFileSync(path.join(projectRoot, 'samconfig.toml'), samConfig);
+    fs.writeFileSync(path.join(projectRoot, '.samignore'), samIgnore);
+
+    console.log(`  📋 Deploying ${routes.length} route(s):`);
+    routes.forEach(r => console.log(`     ⚡ ${r}`));
+    console.log();
+
+    // Build
+    console.log(`  📦 Building...`);
+    try {
+      execSync('sam build --template-file template.json', { cwd: projectRoot, stdio: 'inherit' });
+    } catch (e) {
+      console.error(`\n  ✖ Build failed. Check the errors above.`);
+      return;
+    }
+
+    // Deploy
+    console.log(`\n  🌍 Deploying to AWS...`);
+    try {
+      execSync('sam deploy --no-confirm-changeset --no-fail-on-empty-changeset', { cwd: projectRoot, stdio: 'inherit' });
+    } catch (e) {
+      console.error(`\n  ✖ Deploy failed. Check the errors above.`);
+      return;
+    }
+
+    // Get the output URL
+    try {
+      const output = execSync(
+        `aws cloudformation describe-stacks --stack-name ${stackName} --region ${region} --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text`,
+        { cwd: projectRoot, encoding: 'utf8' }
+      ).trim();
+
+      if (output) {
+        console.log(`\n  ✅ \x1b[1m\x1b[32mDeployed successfully!\x1b[0m`);
+        console.log(`  🌐 API URL: \x1b[4m${output}\x1b[0m\n`);
+        routes.forEach(r => console.log(`     ${output}${r}`));
+        console.log();
+      }
+    } catch (e) {
+      console.log(`\n  ✅ Deploy completed! Check your AWS Console for the API URL.\n`);
+    }
   });
 
 program.parse();

@@ -1,9 +1,19 @@
 {
   "name": "zerra-core",
-  "version": "1.3.1",
-  "description": "The CLI-first Node.js backend framework. File-based routing, instant boot, built-in dev console.",
+  "version": "1.4.0",
+  "description": "The CLI-first Node.js backend framework. File-based routing, instant boot, built-in dev console. Deploy to AWS Lambda.",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./lambda": {
+      "require": "./lambda.js",
+      "types": "./lambda.d.ts"
+    }
+  },
   "scripts": {
     "dev": "node --watch dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,7 +28,9 @@
     "typescript",
     "rest-api",
     "cli-framework",
-    "express-alternative"
+    "express-alternative",
+    "aws-lambda",
+    "serverless"
   ],
   "author": "Nihal Basaniwal (nb2912)",
   "license": "MIT",

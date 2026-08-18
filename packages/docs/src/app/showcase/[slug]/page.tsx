@@ -68,6 +68,12 @@ const CASE_STUDIES: Record<string, CaseStudyData> = {
   }
 };
 
+export function generateStaticParams() {
+  return Object.keys(CASE_STUDIES).map((slug) => ({
+    slug,
+  }));
+}
+
 export default async function CaseStudy({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = CASE_STUDIES[slug] || CASE_STUDIES["nexflow-api"];
