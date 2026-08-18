@@ -5,6 +5,7 @@ applications:
       phases:
         preBuild:
           commands:
+            - rm -rf node_modules
             - cd ../.. && npm ci
         build:
           commands:
